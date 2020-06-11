@@ -1,0 +1,12 @@
+#ifndef ROFIQLIPMON_GLOBAL_H
+#define ROFIQLIPMON_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(ROFIQLIPMON_LIBRARY)
+#  define ROFIQLIPMON_EXPORT Q_DECL_EXPORT
+#else
+#  define ROFIQLIPMON_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // ROFIQLIPMON_GLOBAL_H

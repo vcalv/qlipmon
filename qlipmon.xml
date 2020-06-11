@@ -1,0 +1,40 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="DOMAIN.DOMAIN">
+    <property name="broadcast" type="b" access="readwrite"/>
+    <signal name="updated">
+      <arg name="text" type="s" direction="out"/>
+      <arg name="mode" type="i" direction="out"/>
+    </signal>
+    <method name="setText">
+      <arg name="text" type="s" direction="in"/>
+      <arg name="mode" type="i" direction="in"/>
+    </method>
+    <method name="setText">
+      <arg name="text" type="s" direction="in"/>
+    </method>
+    <method name="getLastText">
+      <arg type="s" direction="out"/>
+      <arg name="mode" type="i" direction="in"/>
+    </method>
+    <method name="getLastText">
+      <arg type="s" direction="out"/>
+    </method>
+    <method name="getTextHistory">
+      <arg type="as" direction="out"/>
+      <arg name="mode" type="i" direction="in"/>
+      <arg name="duplicates" type="b" direction="in"/>
+    </method>
+    <method name="getTextHistory">
+      <arg type="as" direction="out"/>
+      <arg name="mode" type="i" direction="in"/>
+    </method>
+    <method name="getTextHistory">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="getHistory">
+      <arg type="a(tsix)" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QList&lt;database_entry>" />
+    </method>
+  </interface>
+</node>
