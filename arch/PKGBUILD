@@ -1,0 +1,42 @@
+# Maintainer: VCalV
+pkgname=qlipmon-git
+pkgver=1.0.0
+pkgrel=1
+epoch=
+pkgdesc="clipboard manager with rofi plugin and dbus interface"
+arch=('x86_64')
+url="https://github.com/vcalv/qlipmon"
+license=('GPL3')
+groups=()
+depends=(qt5-base)
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("$pkgname::git+https://github.com/vcalv/qlipmon")
+noextract=()
+md5sums=(SKIP)
+validpgpkeys=()
+
+prepare() {
+	mkdir "build"
+	cd "build"
+	qmake -o Makefile ../"$pkgname"/QlipMon.pro -spec linux-g++ CONFIG+=release
+}
+
+build() {
+	cd "build"
+	make
+}
+
+
+package() {
+	cd "build"
+	make install INSTALL_ROOT="$pkgdir/"
+}
