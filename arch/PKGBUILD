@@ -2,7 +2,6 @@
 pkgname=qlipmon-git
 pkgver=1.0.0
 pkgrel=1
-epoch=
 pkgdesc="clipboard manager with rofi plugin and dbus interface"
 arch=('x86_64')
 url="https://github.com/vcalv/qlipmon"
@@ -11,7 +10,7 @@ groups=()
 depends=(qt5-base)
 makedepends=()
 checkdepends=()
-optdepends=()
+optdepends=('rofi: for rofi integration')
 provides=()
 conflicts=()
 replaces=()
@@ -24,8 +23,18 @@ noextract=()
 md5sums=(SKIP)
 validpgpkeys=()
 
+pkgver() {
+  cd "$pkgname"
+  ( set -o pipefail
+    git describe --long 2>/dev/null | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  )
+}
+
 prepare() {
-	mkdir "build"
+	if [[ ! -d build ]]; then
+		mkdir "build"
+	fi
 	cd "build"
 	qmake -o Makefile ../"$pkgname"/QlipMon.pro -spec linux-g++ CONFIG+=release
 }
