@@ -6,14 +6,14 @@ Clipboard history saver with native rofi plugin and dbus interface.
 
 There's two components:
 
- * A server that runs in the background (run from startx or via systemd --user) and saves every clipboard selection on memory
+ * A server that runs in the background (run from startx or via `systemctl --user (start/enable/disable) qlipmon-server.service`) and saves every clipboard selection on memory
  * A rofi plugin that allows you to select previous clipboard selections
 
 Configuration for the server can be done either via the command line (`qlipmon --help`) or via ini file stored in `$HOME/.config/qlipmon/server.ini`
 
 The rofi plugin can only be configured via ini file stored in `$HOME/.config/qlipmon/rofi.ini`
 
-The rofi plugin can be selected by running `rofi -show qlipmon`.
+The rofi plugin can be selected by running `rofi -modi qlipmon -show qlipmon`.
 
 After running each of the components the ini files should be populated with sensible default values.
 
