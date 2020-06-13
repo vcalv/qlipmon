@@ -13,6 +13,8 @@ Configuration for the server can be done either via the command line (`qlipmon -
 
 The rofi plugin can only be configured via ini file stored in `$HOME/.config/qlipmon/rofi.ini`
 
+The rofi plugin can be selected by running `rofi -show qlipmon`.
+
 After running each of the components the ini files should be populated with sensible default values.
 
 There is also a dbus interface that allows you get get previous selections or even change the current one.
