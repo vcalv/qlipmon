@@ -34,5 +34,9 @@ HEADERS += \
     database_entry.h \
 
 target.path = $${PREFIX}/bin
-!isEmpty(target.path): INSTALLS += target
+INSTALLS += target
 
+systemd.path = $${PREFIX}/lib/systemd/user/
+systemd.files += qlipmon-server.service
+
+INSTALLS += systemd

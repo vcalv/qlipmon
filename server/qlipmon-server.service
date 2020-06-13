@@ -1,0 +1,13 @@
+[Unit]
+Description=Qlipmon clipboard manager for user %u
+
+[Service]
+ExecStart=qlipmon-server
+Type=simple
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target
