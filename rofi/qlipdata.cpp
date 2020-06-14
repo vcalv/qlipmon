@@ -11,11 +11,20 @@ RofiData* QlipData::getEntries(){
     qDebug()<<"loaded config "<<config;
 
     QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
-    *ret = _interface.getTextHistory(config.kind, config.duplicates).value();
+    QDBusReply reply = _interface.getTextHistory(config.kind, config.duplicates);
 
-    qDebug()<<"Got a list with "<<ret->size()<<" elements";
-    if(config.numberEntries > 0 && ret->size() > config.numberEntries){
-        ret->erase(ret->begin() + config.numberEntries, ret->end());
+    if(reply.isValid()){
+        ret->entries = reply.value();
+        auto &entries = ret->entries;
+
+        qDebug()<<"Got a list with "<<entries.size()<<" elements";
+        if(config.numberEntries > 0 && entries.size() > config.numberEntries){
+            entries.erase(entries.begin() + config.numberEntries, entries.end());
+        }
+    }else{
+        qWarning()<<"Error getting clipboard data: "<<reply.error();
+        ret->error = true;
+        ret->errorString = reply.error().message();
     }
 
     return ret;

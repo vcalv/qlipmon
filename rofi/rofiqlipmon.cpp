@@ -36,7 +36,11 @@ static int qlipmon_mode_init(Mode *sw) {
  */
 static unsigned int qlipmon_mode_get_num_entries(const Mode *sw) {
   RofiData* data = RofiDataFromMode(sw);
-  return data->size();
+  if (data->error){
+      return 0;
+  }else{
+    return data->entries.size();
+  }
 }
 
 /**
@@ -50,33 +54,35 @@ static unsigned int qlipmon_mode_get_num_entries(const Mode *sw) {
  * @returns the next #ModeMode.
  */
 static ModeMode qlipmon_mode_result(
-  Mode *sw,
-  int mretv,
-  char **input,
-  unsigned int selected_line
-) {
-  ModeMode retv = MODE_EXIT;
-  Q_UNUSED( sw )
-  Q_UNUSED( input )
+        Mode *sw,
+        int mretv,
+        char **input,
+        unsigned int selected_line
+        ) {
+    ModeMode retv = MODE_EXIT;
+    Q_UNUSED( sw )
+    Q_UNUSED( input )
 
-  RofiData* data = RofiDataFromMode(sw);
+    RofiData* data = RofiDataFromMode(sw);
 
 
-  if (mretv & MENU_NEXT) {
-    retv = NEXT_DIALOG;
-  } else if (mretv & MENU_PREVIOUS) {
-    retv = PREVIOUS_DIALOG;
-  } else if (mretv & MENU_QUICK_SWITCH) {
-    retv = (ModeMode) (mretv & MENU_LOWER_MASK);
-  } else if ((mretv & MENU_OK) ) {
-      const QString selected = data->value(selected_line);
-      qDebug()<<"Selected = " << selected;
-      QlipData::setText(selected);
-	  retv = MODE_EXIT;
-  } else if ((mretv & MENU_ENTRY_DELETE) == MENU_ENTRY_DELETE) {
-    retv = RELOAD_DIALOG;
-  }
-  return retv;
+    if (mretv & MENU_NEXT) {
+        retv = NEXT_DIALOG;
+    } else if (mretv & MENU_PREVIOUS) {
+        retv = PREVIOUS_DIALOG;
+    } else if (mretv & MENU_QUICK_SWITCH) {
+        retv = (ModeMode) (mretv & MENU_LOWER_MASK);
+    } else if ((mretv & MENU_OK) ) {
+        if(!data->error){
+            const QString selected = data->entries.value(selected_line);
+            qDebug()<<"Selected = " << selected;
+            QlipData::setText(selected);
+        }
+        retv = MODE_EXIT;
+    } else if ((mretv & MENU_ENTRY_DELETE) == MENU_ENTRY_DELETE) {
+        retv = RELOAD_DIALOG;
+    }
+    return retv;
 }
 
 /**
@@ -100,9 +106,15 @@ static void qlipmon_mode_destroy(Mode *sw) {
  * free).
  */
 static char *qlipmon_get_message(const Mode *sw) {
-  //RofiData* data = RofiDataFromMode(sw);
-  Q_UNUSED( sw )
-  return g_strdup("QlipMon");
+  RofiData* data = RofiDataFromMode(sw);
+  if(data->error){
+      QString line = QString("<b>QlipMon <i>Error:</i> </b>");
+      line += QString("<i>") + data->errorString + QString("</i>");
+      QByteArray ba = line.toLocal8Bit();
+      return g_strdup(ba.data());
+  }else{
+      return NULL;
+  }
 }
 
 /**
@@ -133,8 +145,14 @@ static char *get_display_value(
   // https://github.com/DaveDavenport/rofi/blob/79adae77d72be3de96d1c4e6d53b6bae4cb7e00e/include/widgets/textbox.h#L104
   //*state |= 8;
 
-  QByteArray ba = data->value(selected_line).toLocal8Bit();
-  return g_strdup(ba.data());
+  if(data->error){
+      return NULL;
+  }else{
+      const QString line = data->entries.value(selected_line);
+      QByteArray ba = line.toLocal8Bit();
+      return g_strdup(ba.data());
+  }
+
 }
 
 /**
@@ -148,8 +166,16 @@ static char *get_display_value(
  */
 static int qlipmon_token_match(const Mode *sw, rofi_int_matcher **tokens, unsigned int index) {
   RofiData* data = RofiDataFromMode(sw);
-  QByteArray ba = data->value(index).toLocal8Bit();
-  return helper_token_match(tokens, ba.data());
+
+  if(data->error){
+      // always display error message.
+      // Mute since now no message is displayed in the ellement list
+      // error message is displayed in the status bar
+      return TRUE;
+  }else{
+      QByteArray ba = data->entries.value(index).toLocal8Bit();
+      return helper_token_match(tokens, ba.data());
+  }
 }
 
 cairo_surface_t * qlipmon_get_icon ( const Mode *mode, unsigned int selected_line, int height ){

@@ -9,7 +9,12 @@ extern "C"{
 
 #include "qlipmon_interface.h"
 
-typedef QList<QString> RofiData;
+class RofiData{
+public:
+    QStringList entries;
+    bool error;
+    QString errorString;
+};
 
 class QlipData
 {

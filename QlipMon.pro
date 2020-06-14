@@ -5,4 +5,4 @@ SUBDIRS = \
     server \
     rofi
 
-OTHER_FILES += qlipmon.xml
+OTHER_FILES += qlipmon.xml arch/PKGBUILD
