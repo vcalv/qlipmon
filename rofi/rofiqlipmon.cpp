@@ -11,6 +11,11 @@ RofiData* RofiDataFromMode(const Mode *mode){
     return reinterpret_cast<RofiData*> (mode_get_private_data(mode));
 }
 
+static char* QStringDupa(const QString& line){
+      QByteArray ba = line.toLocal8Bit();
+      return g_strdup(ba.data());
+}
+
 
 /**
  * @param mode The mode to initialize
@@ -110,8 +115,10 @@ static char *qlipmon_get_message(const Mode *sw) {
   if(data->error){
       QString line = QString("<b>QlipMon <i>Error:</i> </b>");
       line += QString("<i>") + data->errorString + QString("</i>");
-      QByteArray ba = line.toLocal8Bit();
-      return g_strdup(ba.data());
+      return QStringDupa(line);
+  }else if( 0 == data->entries.size() ){
+      QString line = QString("<b>QlipMon:</b> <i>No clipboard history!</i>");
+      return QStringDupa(line);
   }else{
       return NULL;
   }
@@ -149,8 +156,7 @@ static char *get_display_value(
       return NULL;
   }else{
       const QString line = data->entries.value(selected_line);
-      QByteArray ba = line.toLocal8Bit();
-      return g_strdup(ba.data());
+      return QStringDupa(line);
   }
 
 }
