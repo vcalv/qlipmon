@@ -62,6 +62,13 @@ QList<database_entry> QlipMon::getHistory(){
 }
 
 void QlipMon::setText(const QString &text, int mode){
-	qDebug()<<"setText("<<text<<")";
-    clip->setText(text, QClipboard::Mode(mode));
+    qDebug()<<"setText("<<text<<")";
+
+    if( mode < 0 ){
+        //set text to both clipboards
+        clip->setText(text, QClipboard::Mode::Clipboard);
+        clip->setText(text, QClipboard::Mode::Selection);
+    }else{
+        clip->setText(text, QClipboard::Mode(mode));
+    }
 }

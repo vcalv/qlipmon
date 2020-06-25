@@ -13,7 +13,7 @@ void Config::load(){
     qDebug()<<"loading settings from file "<<settings.fileName();
     numberEntries = settings.value("entries", numberEntries).toInt();
     duplicates = settings.value("duplicates", duplicates).toBool();
-    kind = settings.value("kind", kind).toBool();
+    kind = settings.value("kind", kind).toInt();
     qDebug()<<"loaded settings "<<*this;
 }
 
