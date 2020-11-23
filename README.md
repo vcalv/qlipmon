@@ -20,7 +20,7 @@ After running each of the components the ini files should be populated with sens
 There is also a dbus interface that allows you get get previous selections or even change the current one.
 
 Every time a new selection is made, a dbus broadcast is also emitted allowing you to listen for these event and take any action you want.
-Selection broadcast is disabled by default and can be enables via command line, ini configuration or via dbus interface.
+Selection broadcast is disabled by default and can be enabled via command line, ini configuration or via dbus interface.
 
 Selections are saved in memory only and for now no persistence is possible,
 
