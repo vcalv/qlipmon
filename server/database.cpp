@@ -92,7 +92,7 @@ database::database(const int _numberEntries){
     }
 
     qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
-    const QString DRIVER("QSQLITE3");
+    const QString DRIVER("QSQLITE");
     QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
     db.setDatabaseName(":memory:");
 
