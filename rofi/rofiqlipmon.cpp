@@ -156,7 +156,8 @@ static char *get_display_value(
   if(data->error){
       return NULL;
   }else{
-      const QString line = data->entries.value(selected_line);
+      QString line = data->entries.value(selected_line);
+      line.replace("\n", "⏎");
       return QStringDupa(line);
   }
 
@@ -206,7 +207,7 @@ G_MODULE_EXPORT Mode mode = {
   ._result            = qlipmon_mode_result,
   ._token_match       = qlipmon_token_match,
   ._get_display_value = get_display_value,
-  ._get_icon          = qlipmon_get_icon,
+  ._get_icon          = nullptr,
   ._get_completion    = nullptr,
   ._preprocess_input  = nullptr,
   ._get_message       = qlipmon_get_message,
