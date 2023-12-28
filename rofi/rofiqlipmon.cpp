@@ -158,6 +158,7 @@ static char *get_display_value(
   }else{
       QString line = data->entries.value(selected_line);
       line.replace("\n", "⏎");
+      line.replace("\t", "⭾");
       return QStringDupa(line);
   }
 
