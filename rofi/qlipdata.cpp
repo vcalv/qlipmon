@@ -14,6 +14,8 @@ RofiData* QlipData::getEntries(){
     QDBusReply reply = _interface.getTextHistory(config.kind, config.duplicates);
 
     if(reply.isValid()){
+        ret->error = false;
+        ret->errorString = "";
         ret->entries = reply.value();
         auto &entries = ret->entries;
 
