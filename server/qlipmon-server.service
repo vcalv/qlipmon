@@ -1,9 +1,11 @@
 [Unit]
 Description=Qlipmon clipboard manager for user %u
+After=graphical-session.target
 
 [Service]
 ExecStart=qlipmon-server
 Type=simple
+After=graphical-session.target
 Restart=on-failure
 RestartSec=5
 StartLimitInterval=60s
