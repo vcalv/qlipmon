@@ -2,8 +2,7 @@ include(../common.pri)
 
 TARGET=qlipmon-server
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += core gui sql dbus
+QT += core gui widgets dbus sql
 
 CONFIG += c++17
 
@@ -40,3 +39,4 @@ systemd.path = $${PREFIX}/lib/systemd/user/
 systemd.files += qlipmon-server.service
 
 INSTALLS += systemd
+

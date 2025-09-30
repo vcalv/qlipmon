@@ -7,7 +7,7 @@
 #include <QList>
 #include <QDateTime>
 #include <QObject>
-#include <QtDBus>
+class QDBusArgument;
 
 #include <QDebug>
 

@@ -1,9 +1,10 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 
 cd `dirname "$0"`;
 
 #PROCESSOR="qdbusxml2cpp -V -N"
-PROCESSOR="qdbusxml2cpp -V"
+#PROCESSOR="qdbusxml2cpp -V"
+PROCESSOR="/usr/lib/qt6/bin/qdbusxml2cpp -V"
 
 function process_file(){
 	sed 's/\\"DOMAIN.DOMAIN\\"/\\"" QLIPMON_DBUS_FQDN "\\"/g' -i $1
