@@ -9,6 +9,7 @@
 #include <QAtomicInt>
 #include <QFileInfo>
 #include <QDir>
+#include <QStandardPaths>
 
 #include <QDebug>
 
@@ -100,15 +101,27 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
     if (useDiskDatabase) {
         qDebug() << "Using disk database at path:" << databasePath;
 
+        // Check if this is a custom path or default location
+        QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
+        bool isDefaultLocation = (databasePath == defaultPath);
+
         // Ensure the directory exists
         QFileInfo fileInfo(databasePath);
         QDir dir = fileInfo.dir();
         if (!dir.exists()) {
-            if (!dir.mkpath(".")) {
-                qCritical() << "Failed to create database directory:" << dir.path();
+            if (isDefaultLocation) {
+                // Auto-create directories for default location
+                if (!dir.mkpath(".")) {
+                    qCritical() << "Failed to create database directory:" << dir.path();
+                    return;
+                }
+                qDebug() << "Created database directory:" << dir.path();
+            } else {
+                // For custom paths, don't auto-create - let user handle directory creation
+                qCritical() << "Database directory does not exist:" << dir.path();
+                qCritical() << "Please create the directory or use --database-path with an existing directory";
                 return;
             }
-            qDebug() << "Created database directory:" << dir.path();
         }
 
         db.setDatabaseName(databasePath);
