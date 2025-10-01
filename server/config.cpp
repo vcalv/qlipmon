@@ -33,6 +33,18 @@ void Config::loadArgs(const QStringList &args){
         broadcastOption.setDefaultValue("false");
         parser.addOption(broadcastOption);
 
+        QCommandLineOption diskDatabaseOption(QStringList() << "disk-database");
+        diskDatabaseOption.setDescription("use disk database instead of memory");
+        diskDatabaseOption.setValueName("true/false");
+        diskDatabaseOption.setDefaultValue("false");
+        parser.addOption(diskDatabaseOption);
+
+        QCommandLineOption databasePathOption(QStringList() << "database-path");
+        databasePathOption.setDescription("database file path (when using disk database)");
+        databasePathOption.setValueName("path");
+        databasePathOption.setDefaultValue("qlipmon.db");
+        parser.addOption(databasePathOption);
+
         QCommandLineOption saveOption(QStringList() << "s" << "save config");
         saveOption.setDescription("save command line values in config file");
         parser.addOption(saveOption);
@@ -46,6 +58,12 @@ void Config::loadArgs(const QStringList &args){
 
         if (parser.isSet(dbusOption))
             dbus = parser.value(dbusOption).toLower() == "true";
+
+        if (parser.isSet(diskDatabaseOption))
+            useDiskDatabase = parser.value(diskDatabaseOption).toLower() == "true";
+
+        if (parser.isSet(databasePathOption))
+            databasePath = parser.value(databasePathOption);
 
         numberEntries = _history_number;
         qDebug()<<"Config after command line parsing = "<<*this;
@@ -65,6 +83,8 @@ void Config::load(){
     numberEntries = settings.value("entries", numberEntries).toInt();
     broadcast = settings.value("broadcast", broadcast).toBool();
     dbus = settings.value("dbus", dbus).toBool();
+    useDiskDatabase = settings.value("use_disk_database", useDiskDatabase).toBool();
+    databasePath = settings.value("database_path", databasePath).toString();
     qDebug()<<"loaded settings "<<*this;
 }
 
@@ -74,6 +94,8 @@ void Config::save(){
     settings.setValue("entries", numberEntries);
     settings.setValue("broadcast", broadcast);
     settings.setValue("dbus", dbus);
+    settings.setValue("use_disk_database", useDiskDatabase);
+    settings.setValue("database_path", databasePath);
 
     qDebug()<<"Saving config to "<<settings.fileName();
     settings.sync();
@@ -81,6 +103,6 @@ void Config::save(){
 }
 
 QDebug &operator<<(QDebug &out, const Config &c){
-    out<<"Config{ entries:"<<c.numberEntries<<", broadcast: "<<c.broadcast<<", "<<" dbus: "<<c.dbus<<"}";
+    out<<"Config{ entries:"<<c.numberEntries<<", broadcast: "<<c.broadcast<<", "<<" dbus: "<<c.dbus<<", disk_db: "<<c.useDiskDatabase<<", db_path: "<<c.databasePath<<"}";
     return out;
 }

@@ -8,6 +8,8 @@ class Config{
     int numberEntries = 500;
     bool broadcast = true;
     bool dbus = true;
+    bool useDiskDatabase = false;
+    QString databasePath = "qlipmon.db";
 
     //void load(const QString& path);
     void load();

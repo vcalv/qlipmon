@@ -10,7 +10,7 @@
 #include <QSettings>
 
 
-QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), database(config.numberEntries){
+QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), database(config.numberEntries, config.useDiskDatabase, config.databasePath){
         QClipboard* clip = QGuiApplication::clipboard();
         QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
 

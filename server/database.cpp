@@ -81,7 +81,7 @@ database::~database(){
 
 }
 
-database::database(const int _numberEntries){
+database::database(const int _numberEntries, bool useDiskDatabase, const QString& databasePath){
     numberEntries = _numberEntries;
     QMutexLocker locker(&__mtx);
 
@@ -94,7 +94,14 @@ database::database(const int _numberEntries){
     qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
     const QString DRIVER("QSQLITE");
     QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
-    db.setDatabaseName(":memory:");
+
+    if (useDiskDatabase) {
+        qDebug() << "Using disk database at path:" << databasePath;
+        db.setDatabaseName(databasePath);
+    } else {
+        qDebug() << "Using in-memory database";
+        db.setDatabaseName(":memory:");
+    }
 
     if(!db.open()){
         qCritical() << db.lastError();

@@ -13,7 +13,7 @@ class database
 {
 public:
 
-    database(const int numberEntries=500);
+    database(const int numberEntries=500, bool useDiskDatabase=false, const QString& databasePath="qlipmon.db");
     ~database();
 
     database_entry getLast();
