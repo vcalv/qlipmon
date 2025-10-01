@@ -72,3 +72,13 @@ void QlipMon::setText(const QString &text, int mode){
         clip->setText(text, QClipboard::Mode(mode));
     }
 }
+
+void QlipMon::clearHistory(){
+    qDebug()<<"clearHistory()";
+    database.__cleanup();
+}
+
+int QlipMon::getEntryCount(){
+    auto entries = database::getUniqueEntries();
+    return entries.count();
+}

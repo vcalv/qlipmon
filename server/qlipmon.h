@@ -26,6 +26,8 @@ public slots:
     QString getLastText(int mode=0);
     QStringList getTextHistory(int mode=-1, bool duplicates=false);
     QList<database_entry> getHistory();
+    void clearHistory();
+    int getEntryCount();
 
 
 signals:
