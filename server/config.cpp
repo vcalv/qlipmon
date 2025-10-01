@@ -5,9 +5,12 @@
 #include <QFileInfo>
 #include <QDir>
 
-static QSettings getSettings(){
-    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "qlipmon", "server");
-    qDebug() << "Config file path:" << settings.fileName();
+static QSettings* getSettings(){
+    static QSettings* settings = nullptr;
+    if (!settings) {
+        settings = new QSettings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "qlipmon", "server");
+        qDebug() << "Config file path:" << settings->fileName();
+    }
     return settings;
 }
 
@@ -82,36 +85,36 @@ void Config::loadArgs(int argc, char* argv[]){
 }
 
 void Config::load(){
-    QSettings settings = getSettings();
+    QSettings* settings = getSettings();
 
     // Ensure config directory exists
-    QFileInfo fileInfo(settings.fileName());
+    QFileInfo fileInfo(settings->fileName());
     QDir configDir = fileInfo.dir();
     if (!configDir.exists()) {
         configDir.mkpath(".");
         qDebug() << "Created config directory:" << configDir.path();
     }
 
-    qDebug()<<"loading settings from file "<<settings.fileName();
-    numberEntries = settings.value("entries", numberEntries).toInt();
-    broadcast = settings.value("broadcast", broadcast).toBool();
-    dbus = settings.value("dbus", dbus).toBool();
-    useDiskDatabase = settings.value("use_disk_database", useDiskDatabase).toBool();
-    databasePath = settings.value("database_path", databasePath).toString();
+    qDebug()<<"loading settings from file "<<settings->fileName();
+    numberEntries = settings->value("entries", numberEntries).toInt();
+    broadcast = settings->value("broadcast", broadcast).toBool();
+    dbus = settings->value("dbus", dbus).toBool();
+    useDiskDatabase = settings->value("use_disk_database", useDiskDatabase).toBool();
+    databasePath = settings->value("database_path", databasePath).toString();
     qDebug()<<"loaded settings "<<*this;
 }
 
 void Config::save(){
-    QSettings settings = getSettings();
-    qDebug()<<"save settings"<< *this <<" to file "<<settings.fileName();
-    settings.setValue("entries", numberEntries);
-    settings.setValue("broadcast", broadcast);
-    settings.setValue("dbus", dbus);
-    settings.setValue("use_disk_database", useDiskDatabase);
-    settings.setValue("database_path", databasePath);
+    QSettings* settings = getSettings();
+    qDebug()<<"save settings"<< *this <<" to file "<<settings->fileName();
+    settings->setValue("entries", numberEntries);
+    settings->setValue("broadcast", broadcast);
+    settings->setValue("dbus", dbus);
+    settings->setValue("use_disk_database", useDiskDatabase);
+    settings->setValue("database_path", databasePath);
 
-    qDebug()<<"Saving config to "<<settings.fileName();
-    settings.sync();
+    qDebug()<<"Saving config to "<<settings->fileName();
+    settings->sync();
     qDebug()<<"Saved";
 }
 
