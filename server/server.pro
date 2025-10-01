@@ -1,4 +1,5 @@
 include(../common.pri)
+include(../common_include.pri)
 
 TARGET=qlipmon-server
 

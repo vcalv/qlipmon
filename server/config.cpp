@@ -6,14 +6,6 @@
 #include <QDir>
 #include <QFile>
 
-static QSettings* getSettings(){
-    static QSettings* settings = nullptr;
-    if (!settings) {
-        settings = new QSettings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "qlipmon", "server");
-        qDebug() << "Config file path:" << settings->fileName();
-    }
-    return settings;
-}
 
 void Config::loadArgs(const QStringList &args){
         load(); // load values from config
@@ -86,49 +78,31 @@ void Config::loadArgs(int argc, char* argv[]){
 }
 
 void Config::load(){
-    QSettings* settings = getSettings();
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "server");
 
-    // Ensure config directory exists
-    QFileInfo fileInfo(settings->fileName());
-    QDir configDir = fileInfo.dir();
-    if (!configDir.exists()) {
-        configDir.mkpath(".");
-        qDebug() << "Created config directory:" << configDir.path();
-    }
+    // Ensure config directory exists and create default config if needed
+    ensureConfigDirectory(settings->fileName());
+    createDefaultConfig(settings);
 
     qDebug()<<"loading settings from file "<<settings->fileName();
 
-    // Check if INI file exists, create with defaults if not
-    if (!QFile::exists(settings->fileName())) {
-        qDebug() << "Config file doesn't exist, creating with defaults";
-        save(); // This will create the file with current defaults
-    }
-
-    numberEntries = settings->value("entries", numberEntries).toInt();
-    broadcast = settings->value("broadcast", broadcast).toBool();
-    dbus = settings->value("dbus", dbus).toBool();
-    useDiskDatabase = settings->value("use_disk_database", useDiskDatabase).toBool();
-    databasePath = settings->value("database_path", databasePath).toString();
+    numberEntries = loadValue(settings, "entries", numberEntries);
+    broadcast = loadValue(settings, "broadcast", broadcast);
+    dbus = loadValue(settings, "dbus", dbus);
+    useDiskDatabase = loadValue(settings, "use_disk_database", useDiskDatabase);
+    databasePath = loadValue(settings, "database_path", databasePath);
     qDebug()<<"loaded settings "<<*this;
 }
 
 void Config::save(){
-    QSettings* settings = getSettings();
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "server");
     qDebug()<<"save settings"<< *this <<" to file "<<settings->fileName();
 
-    // Ensure directory exists before writing
-    QFileInfo fileInfo(settings->fileName());
-    QDir dir = fileInfo.dir();
-    if (!dir.exists()) {
-        dir.mkpath(".");
-        qDebug() << "Created config directory:" << dir.path();
-    }
-
-    settings->setValue("entries", numberEntries);
-    settings->setValue("broadcast", broadcast);
-    settings->setValue("dbus", dbus);
-    settings->setValue("use_disk_database", useDiskDatabase);
-    settings->setValue("database_path", databasePath);
+    saveValue(settings, "entries", numberEntries);
+    saveValue(settings, "broadcast", broadcast);
+    saveValue(settings, "dbus", dbus);
+    saveValue(settings, "use_disk_database", useDiskDatabase);
+    saveValue(settings, "database_path", databasePath);
 
     qDebug()<<"Saving config to "<<settings->fileName();
     settings->sync();

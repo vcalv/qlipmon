@@ -2,8 +2,9 @@
 #define CONFIG_H
 
 #include <QDebug>
+#include "common_config.h"
 
-class Config{
+class Config : public CommonConfig {
    public:
      bool duplicates = false;
      int kind = -1; // -1 => all;

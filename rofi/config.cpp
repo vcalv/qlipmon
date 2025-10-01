@@ -3,34 +3,31 @@
 #include <QFileInfo>
 #include <QSettings>
 
-static QSettings* getSettings(){
-    static QSettings* settings = nullptr;
-    if (!settings) {
-        settings = new QSettings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "qlipmon", "rofi");
-        qDebug() << "Rofi config file path:" << settings->fileName();
-    }
-    return settings;
-}
 
 void Config::load(){
-    QSettings* settings = getSettings();
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
+
+    // Ensure config directory exists and create default config if needed
+    ensureConfigDirectory(settings->fileName());
+    createDefaultConfig(settings);
+
     qDebug()<<"loading settings from file "<<settings->fileName();
-    numberEntries = settings->value("entries", numberEntries).toInt();
-    duplicates = settings->value("duplicates", duplicates).toBool();
-    kind = settings->value("kind", kind).toInt();
-    tabDisplayString = settings->value("tab_string", tabDisplayString).toString();
-    newlineDisplayString = settings->value("newline_string", newlineDisplayString).toString();
+    numberEntries = loadValue(settings, "entries", numberEntries);
+    duplicates = loadValue(settings, "duplicates", duplicates);
+    kind = loadValue(settings, "kind", kind);
+    tabDisplayString = loadValue(settings, "tab_string", tabDisplayString);
+    newlineDisplayString = loadValue(settings, "newline_string", newlineDisplayString);
     qDebug()<<"loaded settings "<<*this;
 }
 
 void Config::save(){
-    QSettings* settings = getSettings();
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
     qDebug()<<"save settings"<< *this <<" to file "<<settings->fileName();
-    settings->setValue("entries", numberEntries);
-    settings->setValue("duplicates", duplicates);
-    settings->setValue("kind", kind);
-    settings->setValue("tab_string", tabDisplayString);
-    settings->setValue("newline_string", newlineDisplayString);
+    saveValue(settings, "entries", numberEntries);
+    saveValue(settings, "duplicates", duplicates);
+    saveValue(settings, "kind", kind);
+    saveValue(settings, "tab_string", tabDisplayString);
+    saveValue(settings, "newline_string", newlineDisplayString);
 
     qDebug()<<"Saving config to "<<settings->fileName();
     settings->sync();
@@ -38,7 +35,7 @@ void Config::save(){
 }
 
 Config::~Config(){
-    QSettings* settings = getSettings();
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
     const QString fileName = settings->fileName();
     QFileInfo finfo(fileName);
 

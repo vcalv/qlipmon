@@ -3,8 +3,9 @@
 
 #include <QDebug>
 #include <QStandardPaths>
+#include "common_config.h"
 
-class Config{
+class Config : public CommonConfig {
   public:
     int numberEntries = 500;
     bool broadcast = true;
