@@ -18,6 +18,8 @@ void Config::load(){
     numberEntries = settings->value("entries", numberEntries).toInt();
     duplicates = settings->value("duplicates", duplicates).toBool();
     kind = settings->value("kind", kind).toInt();
+    tabDisplayString = settings->value("tab_string", tabDisplayString).toString();
+    newlineDisplayString = settings->value("newline_string", newlineDisplayString).toString();
     qDebug()<<"loaded settings "<<*this;
 }
 
@@ -27,6 +29,8 @@ void Config::save(){
     settings->setValue("entries", numberEntries);
     settings->setValue("duplicates", duplicates);
     settings->setValue("kind", kind);
+    settings->setValue("tab_string", tabDisplayString);
+    settings->setValue("newline_string", newlineDisplayString);
 
     qDebug()<<"Saving config to "<<settings->fileName();
     settings->sync();
@@ -46,6 +50,8 @@ Config::~Config(){
 }
 
 QDebug &operator<<(QDebug &out, const Config &c){
-    out<<"Config{ number:"<<c.numberEntries<<", duplicates: "<<c.duplicates<<", "<<" kind: "<<c.kind<<"}";
+    out<<"Config{ number:"<<c.numberEntries<<", duplicates: "<<c.duplicates<<", "
+       <<" kind: "<<c.kind<<", tab_string: "<<c.tabDisplayString
+       <<", newline_string: "<<c.newlineDisplayString<<"}";
     return out;
 }

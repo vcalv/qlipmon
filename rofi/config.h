@@ -4,18 +4,22 @@
 #include <QDebug>
 
 class Config{
-  public:
-    bool duplicates = false;
-    int kind = -1; // -1 => all;
-    int numberEntries = 0; // infinite
+   public:
+     bool duplicates = false;
+     int kind = -1; // -1 => all;
+     int numberEntries = 0; // infinite
 
-    //void load(const QString& path);
-    void load();
-    //void save(const QString& path);
-    void save();
+     // Configurable display strings for common control characters
+     QString tabDisplayString = QStringLiteral("⭾");
+     QString newlineDisplayString = QStringLiteral("⏎");
 
-    ~Config();
-};
+     //void load(const QString& path);
+     void load();
+     //void save(const QString& path);
+     void save();
+
+     ~Config();
+ };
 
 QDebug &operator<<(QDebug &out, const Config &c);
 

@@ -7,17 +7,29 @@ extern "C" {
 }
 
 #include "qlipdata.h"
+#include "config.h"
 
 // Constants for visual character replacements - improves maintainability
 // by centralizing all display transformations in one location
-static const QString RETURN_SYMBOL = QStringLiteral("⏎");
-static const QString TAB_SYMBOL = QStringLiteral("⭾");
 static const QString CR_SYMBOL = QStringLiteral("␍");
 static const QString VT_SYMBOL = QStringLiteral("␋");
 static const QString FF_SYMBOL = QStringLiteral("␌");
 static const QString BELL_SYMBOL = QStringLiteral("␇");
 static const QString BS_SYMBOL = QStringLiteral("␈");
 static const QString ESC_SYMBOL = QStringLiteral("␛");
+
+/**
+ * @brief Gets the configured display strings for tab and newline characters
+ *
+ * @param tabString Reference to store the tab display string
+ * @param newlineString Reference to store the newline display string
+ */
+static void getDisplayStrings(QString& tabString, QString& newlineString) {
+    Config config;
+    config.load();
+    tabString = config.tabDisplayString;
+    newlineString = config.newlineDisplayString;
+}
 
 /**
  * @brief Sanitizes clipboard content for display in Rofi interface
@@ -32,8 +44,13 @@ static QString sanitizeForDisplay(const QString& input) {
 
     QString sanitized = input;
 
-    sanitized.replace(QLatin1String("\n"), RETURN_SYMBOL);
-    sanitized.replace(QLatin1String("\t"), TAB_SYMBOL);
+    // Get configured display strings for common characters
+    QString tabDisplay, newlineDisplay;
+    getDisplayStrings(tabDisplay, newlineDisplay);
+
+    // Replace control characters with visual representations
+    sanitized.replace(QLatin1String("\n"), newlineDisplay);
+    sanitized.replace(QLatin1String("\t"), tabDisplay);
     sanitized.replace(QLatin1String("\r"), CR_SYMBOL);
     sanitized.replace(QLatin1String("\v"), VT_SYMBOL);
     sanitized.replace(QLatin1String("\f"), FF_SYMBOL);
