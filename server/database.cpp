@@ -7,6 +7,8 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QAtomicInt>
+#include <QFileInfo>
+#include <QDir>
 
 #include <QDebug>
 
@@ -97,6 +99,18 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
 
     if (useDiskDatabase) {
         qDebug() << "Using disk database at path:" << databasePath;
+
+        // Ensure the directory exists
+        QFileInfo fileInfo(databasePath);
+        QDir dir = fileInfo.dir();
+        if (!dir.exists()) {
+            if (!dir.mkpath(".")) {
+                qCritical() << "Failed to create database directory:" << dir.path();
+                return;
+            }
+            qDebug() << "Created database directory:" << dir.path();
+        }
+
         db.setDatabaseName(databasePath);
     } else {
         qDebug() << "Using in-memory database";
