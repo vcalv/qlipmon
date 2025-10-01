@@ -49,4 +49,3 @@ QDebug &operator<<(QDebug &out, const database_entry &e){
     out<<"database::entry{ id:"<<e.id<<", text: "<<e.text<<", "<<" mode: "<<e.mode<<", when: "<<e.when<<"}";
     return out;
 }
-

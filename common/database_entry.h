@@ -1,4 +1,3 @@
-
 #ifndef DATABASE_ENTRY_H
 #define DATABASE_ENTRY_H
 

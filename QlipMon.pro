@@ -1,4 +1,4 @@
-include(./common.pri)
+include(./common_include.pri)
 
 TEMPLATE = subdirs
 SUBDIRS = \

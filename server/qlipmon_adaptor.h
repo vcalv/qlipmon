@@ -14,7 +14,7 @@
 
 #include <QtCore/QObject>
 #include <QtDBus/QtDBus>
-#include "database_entry.h"
+#include "../common/database_entry.h"
 #include <QtCore/qcontainerfwd.h>
 
 /*

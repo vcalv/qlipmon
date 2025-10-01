@@ -19,7 +19,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtDBus/QtDBus>
-#include "../server/database_entry.h"
+#include "../common/database_entry.h"
 
 /*
  * Proxy class for interface QLIPMON_DBUS_FQDN

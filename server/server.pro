@@ -1,4 +1,3 @@
-include(../common.pri)
 include(../common_include.pri)
 
 TARGET=qlipmon-server
@@ -24,14 +23,13 @@ SOURCES += \
     main.cpp \
     qlipmon.cpp \
     database.cpp \
-    database_entry.cpp \
+    ../common/database_entry.cpp \
 
 HEADERS += \
     qlipmon_adaptor.h \
     config.h \
     qlipmon.h \
     database.h \
-    database_entry.h \
 
 target.path = $${PREFIX}/bin
 INSTALLS += target

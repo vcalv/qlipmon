@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #include <QDebug>
-#include "common_config.h"
+#include "../common/common_config.h"
 
 class Config : public CommonConfig {
    public:

@@ -6,7 +6,7 @@
 #include <QList>
 #include <QObject>
 
-#include "database_entry.h"
+#include "../common/database_entry.h"
 
 
 class database

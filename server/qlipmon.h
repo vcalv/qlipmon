@@ -2,7 +2,7 @@
 #define QLIPMON_H
 
 #include "database.h"
-#include "database_entry.h"
+#include "../common/database_entry.h"
 #include "config.h"
 
 #include <QObject>

@@ -3,7 +3,7 @@
 
 #include <QDebug>
 #include <QStandardPaths>
-#include "common_config.h"
+#include "../common/common_config.h"
 
 class Config : public CommonConfig {
   public:

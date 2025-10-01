@@ -1,4 +1,3 @@
-include(../common.pri)
 include(../common_include.pri)
 
 TARGET = qlipmon
@@ -39,7 +38,7 @@ SOURCES += \
     config.cpp \
     qlipdata.cpp \
     rofiqlipmon.cpp \
-    ../server/database_entry.cpp \
+    ../common/database_entry.cpp \
 
 HEADERS += \
     qlipmon_interface.h \
