@@ -297,7 +297,17 @@ QList<database_entry> database::getUniqueEntries(){
 
 
 void database::clearHistory(){
-    __cleanup();
+    qDebug()<<"Clearing ALL history entries";
+    __transaction();
+
+    QSqlQuery query("DELETE FROM pastes");
+    if(query.isActive()){
+        __commit();
+        qDebug()<<"Cleared all paste entries";
+    }else{
+        qWarning() << "SQL DELETE ERROR: " << query.lastError().text();
+        __rollback();
+    }
 }
 
 void database::__cleanup(){

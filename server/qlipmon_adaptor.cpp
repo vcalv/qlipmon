@@ -45,6 +45,20 @@ void QlipmonAdaptor::setBroadcast(bool value)
     parent()->setProperty("broadcast", QVariant::fromValue(value));
 }
 
+void QlipmonAdaptor::clearHistory()
+{
+    // handle method call DOMAIN.DOMAIN.clearHistory
+    QMetaObject::invokeMethod(parent(), "clearHistory");
+}
+
+int QlipmonAdaptor::getEntryCount()
+{
+    // handle method call DOMAIN.DOMAIN.getEntryCount
+    int out0{};
+    QMetaObject::invokeMethod(parent(), "getEntryCount", Q_RETURN_ARG(int, out0));
+    return out0;
+}
+
 QList<database_entry> QlipmonAdaptor::getHistory()
 {
     // handle method call DOMAIN.DOMAIN.getHistory

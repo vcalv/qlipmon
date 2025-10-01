@@ -61,6 +61,10 @@ class QlipmonAdaptor: public QDBusAbstractAdaptor
 "      <arg direction=\"out\" type=\"a(tsix)\"/>\n"
 "      <annotation value=\"QList&lt;database_entry&gt;\" name=\"org.qtproject.QtDBus.QtTypeName.Out0\"/>\n"
 "    </method>\n"
+"    <method name=\"getEntryCount\">\n"
+"      <arg direction=\"out\" type=\"i\"/>\n"
+"    </method>\n"
+"    <method name=\"clearHistory\"/>\n"
 "  </interface>\n"
         "")
 public:
@@ -73,6 +77,8 @@ public: // PROPERTIES
     void setBroadcast(bool value);
 
 public Q_SLOTS: // METHODS
+    void clearHistory();
+    int getEntryCount();
     QList<database_entry> getHistory();
     QString getLastText();
     QString getLastText(int mode);

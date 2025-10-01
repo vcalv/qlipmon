@@ -43,6 +43,18 @@ public:
     { setProperty("broadcast", QVariant::fromValue(value)); }
 
 public Q_SLOTS: // METHODS
+    inline QDBusPendingReply<> clearHistory()
+    {
+        QList<QVariant> argumentList;
+        return asyncCallWithArgumentList(QStringLiteral("clearHistory"), argumentList);
+    }
+
+    inline QDBusPendingReply<int> getEntryCount()
+    {
+        QList<QVariant> argumentList;
+        return asyncCallWithArgumentList(QStringLiteral("getEntryCount"), argumentList);
+    }
+
     inline QDBusPendingReply<QList<database_entry> > getHistory()
     {
         QList<QVariant> argumentList;

@@ -36,5 +36,10 @@
       <arg type="a(tsix)" direction="out"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QList&lt;database_entry>" />
     </method>
+    <method name="getEntryCount">
+      <arg type="i" direction="out"/>
+    </method>
+    <method name="clearHistory">
+    </method>
   </interface>
 </node>
