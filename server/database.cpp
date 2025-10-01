@@ -134,26 +134,36 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
         return;
     }
 
-    const QStringList DDLs ={
-         "CREATE TABLE texts ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "text TEXT NOT NULL"
-         ");",
-        "CREATE TABLE pastes ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
-            "mode INTEGER NOT NULL,"
-            "ts INTEGER DEFAULT NULL"
-         ");",
-         "CREATE UNIQUE INDEX idx_texts_text ON texts(text);"
-    };
+    // Check if tables already exist
+    QSqlQuery checkTables("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'");
+    bool tablesExist = checkTables.next();
 
-    for (const QString& DDL: DDLs){
-        QSqlQuery query(DDL);
-        if(!query.isActive()){
-            qWarning() << "SQL CREATE ERROR: " << query.lastError().text();
-            return;
+    if (!tablesExist) {
+        qDebug() << "Creating database schema...";
+        const QStringList DDLs ={
+             "CREATE TABLE texts ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "text TEXT NOT NULL"
+             ");",
+            "CREATE TABLE pastes ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
+                "mode INTEGER NOT NULL,"
+                "ts INTEGER DEFAULT NULL"
+             ");",
+            "CREATE UNIQUE INDEX idx_texts_text ON texts(text);"
+        };
+
+        for (const QString& DDL: DDLs){
+            QSqlQuery query(DDL);
+            if(!query.isActive()){
+                qWarning() << "SQL CREATE ERROR: " << query.lastError().text();
+                return;
+            }
         }
+        qDebug() << "Database schema created successfully";
+    } else {
+        qDebug() << "Database schema already exists, skipping creation";
     }
 
     ++__count;;
