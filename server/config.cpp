@@ -78,9 +78,6 @@ void Config::loadArgs(const QStringList &args){
 
         if (parser.isSet(saveOption))
             save();
-
-        // Always save current configuration to ensure INI file exists
-        save();
 }
 
 void Config::loadArgs(int argc, char* argv[]){
@@ -100,6 +97,13 @@ void Config::load(){
     }
 
     qDebug()<<"loading settings from file "<<settings->fileName();
+
+    // Check if INI file exists, create with defaults if not
+    if (!QFile::exists(settings->fileName())) {
+        qDebug() << "Config file doesn't exist, creating with defaults";
+        save(); // This will create the file with current defaults
+    }
+
     numberEntries = settings->value("entries", numberEntries).toInt();
     broadcast = settings->value("broadcast", broadcast).toBool();
     dbus = settings->value("dbus", dbus).toBool();
