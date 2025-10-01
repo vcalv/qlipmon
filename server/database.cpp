@@ -296,6 +296,10 @@ QList<database_entry> database::getUniqueEntries(){
 }
 
 
+void database::clearHistory(){
+    __cleanup();
+}
+
 void database::__cleanup(){
     qDebug()<<"Cleaning up for "<<numberEntries<<" entries";
     if( numberEntries < 0 ){

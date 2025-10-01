@@ -75,7 +75,7 @@ void QlipMon::setText(const QString &text, int mode){
 
 void QlipMon::clearHistory(){
     qDebug()<<"clearHistory()";
-    database.__cleanup();
+    database::clearHistory();
 }
 
 int QlipMon::getEntryCount(){

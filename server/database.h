@@ -20,6 +20,7 @@ public:
     QList<database_entry> getUniqueEntries();
     QList<database_entry> getDuplicateEntries();
     QString getLast(QClipboard::Mode mode);
+    void clearHistory();
 
 
 protected:
