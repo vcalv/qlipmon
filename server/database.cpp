@@ -101,25 +101,24 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
     if (useDiskDatabase) {
         qDebug() << "Using disk database at path:" << databasePath;
 
-        // Check if this is a custom path or default location
-        QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
-        bool isDefaultLocation = (databasePath == defaultPath);
+        // Always ensure default data directory exists
+        QString defaultDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QDir dataDir(defaultDataDir);
+        if (!dataDir.exists()) {
+            if (!dataDir.mkpath(".")) {
+                qCritical() << "Failed to create data directory:" << defaultDataDir;
+                return;
+            }
+            qDebug() << "Created data directory:" << defaultDataDir;
+        }
 
-        // Ensure the directory exists
-        QFileInfo fileInfo(databasePath);
-        QDir dir = fileInfo.dir();
-        if (!dir.exists()) {
-            if (isDefaultLocation) {
-                // Auto-create directories for default location
-                if (!dir.mkpath(".")) {
-                    qCritical() << "Failed to create database directory:" << dir.path();
-                    return;
-                }
-                qDebug() << "Created database directory:" << dir.path();
-            } else {
-                // For custom paths, don't auto-create - let user handle directory creation
+        // For non-default paths, check if directory exists
+        if (databasePath != defaultDataDir + "/qlipmon.db") {
+            QFileInfo fileInfo(databasePath);
+            QDir dir = fileInfo.dir();
+            if (!dir.exists()) {
                 qCritical() << "Database directory does not exist:" << dir.path();
-                qCritical() << "Please create the directory or use --database-path with an existing directory";
+                qCritical() << "Please create the directory or use the default path";
                 return;
             }
         }

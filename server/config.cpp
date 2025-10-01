@@ -2,10 +2,13 @@
 #include <QSettings>
 #include <QCommandLineParser>
 #include <QStandardPaths>
+#include <QFileInfo>
+#include <QDir>
 
 static QSettings getSettings(){
-    //QSettings settings(path, QSettings::Format::NativeFormat);
-    return QSettings("qlipmon", "server");
+    QSettings settings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, "qlipmon", "server");
+    qDebug() << "Config file path:" << settings.fileName();
+    return settings;
 }
 
 void Config::loadArgs(const QStringList &args){
@@ -80,6 +83,15 @@ void Config::loadArgs(int argc, char* argv[]){
 
 void Config::load(){
     QSettings settings = getSettings();
+
+    // Ensure config directory exists
+    QFileInfo fileInfo(settings.fileName());
+    QDir configDir = fileInfo.dir();
+    if (!configDir.exists()) {
+        configDir.mkpath(".");
+        qDebug() << "Created config directory:" << configDir.path();
+    }
+
     qDebug()<<"loading settings from file "<<settings.fileName();
     numberEntries = settings.value("entries", numberEntries).toInt();
     broadcast = settings.value("broadcast", broadcast).toBool();
