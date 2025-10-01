@@ -8,6 +8,42 @@ extern "C" {
 
 #include "qlipdata.h"
 
+// Constants for visual character replacements - improves maintainability
+// by centralizing all display transformations in one location
+static const QString RETURN_SYMBOL = QStringLiteral("⏎");
+static const QString TAB_SYMBOL = QStringLiteral("⭾");
+static const QString CR_SYMBOL = QStringLiteral("␍");
+static const QString VT_SYMBOL = QStringLiteral("␋");
+static const QString FF_SYMBOL = QStringLiteral("␌");
+static const QString BELL_SYMBOL = QStringLiteral("␇");
+static const QString BS_SYMBOL = QStringLiteral("␈");
+static const QString ESC_SYMBOL = QStringLiteral("␛");
+
+/**
+ * @brief Sanitizes clipboard content for display in Rofi interface
+ *
+ * @param input The raw clipboard content string
+ * @return QString with control characters replaced by visual symbols
+ */
+static QString sanitizeForDisplay(const QString& input) {
+    if (input.isEmpty()) {
+        return input;
+    }
+
+    QString sanitized = input;
+
+    sanitized.replace(QLatin1String("\n"), RETURN_SYMBOL);
+    sanitized.replace(QLatin1String("\t"), TAB_SYMBOL);
+    sanitized.replace(QLatin1String("\r"), CR_SYMBOL);
+    sanitized.replace(QLatin1String("\v"), VT_SYMBOL);
+    sanitized.replace(QLatin1String("\f"), FF_SYMBOL);
+    sanitized.replace(QLatin1String("\a"), BELL_SYMBOL);
+    sanitized.replace(QLatin1String("\b"), BS_SYMBOL);
+    sanitized.replace(QLatin1String("\e"), ESC_SYMBOL);
+
+    return sanitized;
+}
+
 RofiData* RofiDataFromMode(const Mode *mode){
     return reinterpret_cast<RofiData*> (mode_get_private_data(mode));
 }
@@ -153,14 +189,25 @@ static char *get_display_value(
   // https://github.com/DaveDavenport/rofi/blob/79adae77d72be3de96d1c4e6d53b6bae4cb7e00e/include/widgets/textbox.h#L104
   //*state |= 8;
 
+  // Enhanced error handling and edge case management
   if(data->error){
       return NULL;
-  }else{
-      QString line = data->entries.value(selected_line);
-      line.replace("\n", "⏎");
-      line.replace("\t", "⭾");
-      return QStringDupa(line);
   }
+
+  // Bounds checking: ensure selected_line is within valid range
+  if(selected_line >= static_cast<unsigned int>(data->entries.size())) {
+      QString errorMsg = QStringLiteral("<Invalid entry index>");
+      return QStringDupa(errorMsg);
+  }
+
+  // Main processing with improved character sanitization
+  QString line = data->entries.value(selected_line);
+
+  // Apply comprehensive character replacements for better display
+  // This replaces the original two replace() calls with a single, more efficient function
+  QString sanitizedLine = sanitizeForDisplay(line);
+
+  return QStringDupa(sanitizedLine);
 
 }
 
