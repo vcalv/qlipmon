@@ -1,6 +1,7 @@
 #include "config.h"
 #include <QSettings>
 #include <QCommandLineParser>
+#include <QStandardPaths>
 
 static QSettings getSettings(){
     //QSettings settings(path, QSettings::Format::NativeFormat);
@@ -42,7 +43,7 @@ void Config::loadArgs(const QStringList &args){
         QCommandLineOption databasePathOption(QStringList() << "database-path");
         databasePathOption.setDescription("database file path (when using disk database)");
         databasePathOption.setValueName("path");
-        databasePathOption.setDefaultValue("qlipmon.db");
+        databasePathOption.setDefaultValue(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db");
         parser.addOption(databasePathOption);
 
         QCommandLineOption saveOption(QStringList() << "s" << "save config");

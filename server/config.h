@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <QDebug>
+#include <QStandardPaths>
 
 class Config{
   public:
@@ -9,7 +10,7 @@ class Config{
     bool broadcast = true;
     bool dbus = true;
     bool useDiskDatabase = false;
-    QString databasePath = "qlipmon.db";
+    QString databasePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
 
     //void load(const QString& path);
     void load();
