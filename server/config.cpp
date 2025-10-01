@@ -4,6 +4,7 @@
 #include <QStandardPaths>
 #include <QFileInfo>
 #include <QDir>
+#include <QFile>
 
 static QSettings* getSettings(){
     static QSettings* settings = nullptr;
@@ -77,6 +78,9 @@ void Config::loadArgs(const QStringList &args){
 
         if (parser.isSet(saveOption))
             save();
+
+        // Always save current configuration to ensure INI file exists
+        save();
 }
 
 void Config::loadArgs(int argc, char* argv[]){
@@ -107,6 +111,15 @@ void Config::load(){
 void Config::save(){
     QSettings* settings = getSettings();
     qDebug()<<"save settings"<< *this <<" to file "<<settings->fileName();
+
+    // Ensure directory exists before writing
+    QFileInfo fileInfo(settings->fileName());
+    QDir dir = fileInfo.dir();
+    if (!dir.exists()) {
+        dir.mkpath(".");
+        qDebug() << "Created config directory:" << dir.path();
+    }
+
     settings->setValue("entries", numberEntries);
     settings->setValue("broadcast", broadcast);
     settings->setValue("dbus", dbus);
@@ -115,7 +128,13 @@ void Config::save(){
 
     qDebug()<<"Saving config to "<<settings->fileName();
     settings->sync();
-    qDebug()<<"Saved";
+
+    // Verify file was created
+    if (QFile::exists(settings->fileName())) {
+        qDebug()<<"Config file created successfully:" << settings->fileName();
+    } else {
+        qWarning()<<"Failed to create config file:" << settings->fileName();
+    }
 }
 
 QDebug &operator<<(QDebug &out, const Config &c){
