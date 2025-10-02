@@ -10,6 +10,13 @@ INCLUDEPATH += $$PROJECT_ROOT/common
 # Define common headers directory
 COMMON_HEADERS_DIR = $$PROJECT_ROOT/common
 
+# Version information
+VERSION = "0.2.0"
+APP_NAME = "Qlipmon"
+
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
+DEFINES += APP_NAME=\\\"$$APP_NAME\\\"
+
 # DBus configuration
 isEmpty(QLIPMON_DBUS_FQDN){
 	QLIPMON_DBUS_FQDN = org.qlipmon

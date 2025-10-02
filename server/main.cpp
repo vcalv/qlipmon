@@ -14,14 +14,15 @@ public:
         qlipmon(nullptr)
     {
 
-        setApplicationName("QlipMon");
-        setApplicationVersion("1.0");
+        setApplicationName(APP_NAME);
+        setApplicationVersion(APP_VERSION);
 
         Config config;
         config.loadArgs(argc, argv);
         qlipmon = new QlipMon(config);
 
-
+        qInfo()<<"Application name: " << applicationName();
+        qInfo()<<"Application version: " << applicationVersion();
     }
 
     ~Application(){
