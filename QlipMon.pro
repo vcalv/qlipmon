@@ -7,4 +7,3 @@ SUBDIRS = \
 
 OTHER_FILES += qlipmon.xml arch/PKGBUILD
 VERSION = 0.2.0
-DEFINES += APP_VERSION=\\\"$$VERSION\\\"
