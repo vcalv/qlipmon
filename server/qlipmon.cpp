@@ -8,19 +8,20 @@
 #include <QGuiApplication>
 #include <QString>
 #include <QSettings>
-#include <QDBusConnection>
+#include <QtDBus/QDBusConnection>
 
 QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), db(config.numberEntries, config.useDiskDatabase, config.databasePath){
         clip = QGuiApplication::clipboard();
         QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
 
         if(config.dbus){
-            auto adaptor = new QlipmonAdaptor(this);
+            dbusAdaptor = new QlipmonAdaptor(this);
             QDBusConnection connection = QDBusConnection::sessionBus();
             connection.registerObject(QLIPMON_DBUS_PATH, this);
             connection.registerService(QLIPMON_DBUS_FQDN);
         }else{
             qWarning()<<"No DBUS interface. Why even run this?";
+            dbusAdaptor = nullptr;
         }
 
         setProperty("broadcast", config.broadcast);

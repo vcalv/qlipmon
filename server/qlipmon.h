@@ -4,12 +4,14 @@
 #include "database.h"
 #include "../common/database_entry.h"
 #include "config.h"
+#include "qlipmon_adaptor.h"
 
 #include <QObject>
 #include <QApplication>
 #include <QClipboard>
 #include <QString>
 #include <QStringList>
+#include <QtDBus/QtDBus>
 
 class QlipMon : public QObject
 {
@@ -37,6 +39,7 @@ private:
     QClipboard* clip;
     database db;
     bool _broadcast;
+    QlipmonAdaptor* dbusAdaptor = nullptr;
 
 private slots:
     void changed(QClipboard::Mode mode);
