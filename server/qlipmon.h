@@ -11,7 +11,7 @@
 #include <QString>
 #include <QStringList>
 
-class QlipMon : public QObject, public database
+class QlipMon : public QObject
 {
     Q_OBJECT
     //Q_CLASSINFO("D-Bus Interface", QLIPMON_DBUS_FQDN)
@@ -35,6 +35,7 @@ signals:
 
 private:
     QClipboard* clip;
+    database db;
     bool _broadcast;
 
 private slots:

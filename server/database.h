@@ -21,10 +21,7 @@ public:
     QList<database_entry> getDuplicateEntries();
     QString getLast(QClipboard::Mode mode);
     void clearHistory();
-
-
-protected:
-    void _save(QString text, QClipboard::Mode mode);
+    void save(QString text, QClipboard::Mode mode);
 
 private:
     int numberEntries;

@@ -16,14 +16,6 @@
 static QMutex __mtx;
 static QAtomicInt __count(0);
 
-/*
-TODO
-limit number of entries or space
-deal with duplicate entries better
-TTS ?
-*/
-
-
 static QSqlDatabase __database(){
     return QSqlDatabase::database();
 }
@@ -170,7 +162,7 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
 
 }
 
-void database::_save(QString text, QClipboard::Mode mode){
+void database::save(QString text, QClipboard::Mode mode){
     qDebug()<<"save("<<text<<", "<<mode<<")";
 
     if(0 == text.size()){

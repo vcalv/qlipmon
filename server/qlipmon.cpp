@@ -8,14 +8,14 @@
 #include <QGuiApplication>
 #include <QString>
 #include <QSettings>
+#include <QDBusConnection>
 
-
-QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), database(config.numberEntries, config.useDiskDatabase, config.databasePath){
-        QClipboard* clip = QGuiApplication::clipboard();
+QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), db(config.numberEntries, config.useDiskDatabase, config.databasePath){
+        clip = QGuiApplication::clipboard();
         QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
 
         if(config.dbus){
-            new QlipmonAdaptor(this);
+            auto adaptor = new QlipmonAdaptor(this);
             QDBusConnection connection = QDBusConnection::sessionBus();
             connection.registerObject(QLIPMON_DBUS_PATH, this);
             connection.registerService(QLIPMON_DBUS_FQDN);
@@ -36,18 +36,18 @@ void QlipMon::changed(QClipboard::Mode mode){
         qDebug()<<"NOT broadcasting";
     }
 
-    _save(text, mode);
+    db.save(text, mode);
 }
 
 QString QlipMon::getLastText(int mode){
-    return database::getLast(QClipboard::Mode(mode));
+    return db.getLast(QClipboard::Mode(mode));
 }
 
 QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
     const auto mode = QClipboard::Mode(_mode);
     QStringList ret;
 
-    auto entries = duplicates ? database::getDuplicateEntries(): database::getUniqueEntries();
+    auto entries = duplicates ? db.getDuplicateEntries(): db.getUniqueEntries();
 
     for (const database_entry &entry : entries){
         if(_mode < 0 || entry.mode == mode){
@@ -58,7 +58,7 @@ QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
 }
 
 QList<database_entry> QlipMon::getHistory(){
-    return database::getUniqueEntries();
+    return db.getUniqueEntries();
 }
 
 void QlipMon::setText(const QString &text, int mode){
@@ -75,10 +75,10 @@ void QlipMon::setText(const QString &text, int mode){
 
 void QlipMon::clearHistory(){
     qDebug()<<"clearHistory()";
-    database::clearHistory();
+    db.clearHistory();
 }
 
 int QlipMon::getEntryCount(){
-    auto entries = database::getUniqueEntries();
+    auto entries = db.getUniqueEntries();
     return entries.count();
 }
