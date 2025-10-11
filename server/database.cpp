@@ -43,20 +43,21 @@ static database_entry entryFromQuery(QSqlQuery& query){
 }
 
 static QList<database_entry> entriesFromSQL(const QString &sql){
-    QSqlQuery query(sql);
-    query.exec();
+    QSqlQuery query;
+    query.prepare(sql);
 
-    if(!query.isActive())
+    if(!query.exec()){
         qWarning() << "SQL SELECT ERROR: " << query.lastError().text();
+        qWarning() << "Failed query: " << sql;
+        return QList<database_entry>();
+    }
 
     QList<database_entry> ret;
-
     while(query.next()){
         ret.append(entryFromQuery(query));
     }
 
     return ret;
-
 }
 
 database::~database(){
@@ -66,14 +67,15 @@ database::~database(){
     if(0==--__count){
         qDebug()<<"Closing database";
         QSqlDatabase db = __database();
+
         db.close();
 
-        if(db.open()){
-            qCritical() << db.lastError();
-            return;
+        // Verify database is actually closed
+        if(db.isOpen()){
+            qCritical() << "Database still open after close attempt!";
+            qCritical() << "Database connection name: " << db.connectionName();
         }
     }
-
 }
 
 database::database(const int _numberEntries, bool useDiskDatabase, const QString& databasePath){
@@ -122,37 +124,45 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
     }
 
     if(!db.open()){
-        qCritical() << db.lastError();
+        qCritical() << "Failed to open database: " << db.lastError().text();
+        qCritical() << "Database name: " << databasePath;
+        qCritical() << "Driver: " << DRIVER;
         return;
     }
 
     // Check if tables already exist
-    QSqlQuery checkTables("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'");
+    QSqlQuery checkTables;
+    if(!checkTables.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'")){
+        qCritical() << "SQL CHECK TABLES ERROR: " << checkTables.lastError().text();
+        return;
+    }
+
     bool tablesExist = checkTables.next();
 
     if (!tablesExist) {
         qDebug() << "Creating database schema...";
         const QStringList DDLs ={
-             "CREATE TABLE texts ("
-                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "text TEXT NOT NULL"
-             ");",
-            "CREATE TABLE pastes ("
-                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
-                "mode INTEGER NOT NULL,"
-                "ts INTEGER DEFAULT NULL"
-             ");",
-            "CREATE UNIQUE INDEX idx_texts_text ON texts(text);"
+              "CREATE TABLE texts ("
+                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                 "text TEXT NOT NULL"
+              ");",
+             "CREATE TABLE pastes ("
+                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                 "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
+                 "mode INTEGER NOT NULL,"
+                 "ts INTEGER DEFAULT NULL"
+              ");",
+             "CREATE UNIQUE INDEX idx_texts_text ON texts(text);"
         };
 
         for (const QString& DDL: DDLs){
-            QSqlQuery query(DDL);
-            if(!query.isActive()){
-                qWarning() << "SQL CREATE ERROR: " << query.lastError().text();
-                return;
-            }
-        }
+             QSqlQuery query;
+             if(!query.exec(DDL)){
+                 qCritical() << "SQL CREATE ERROR: " << query.lastError().text();
+                 qCritical() << "Failed DDL: " << DDL;
+                 return;
+             }
+         }
         qDebug() << "Database schema created successfully";
     } else {
         qDebug() << "Database schema already exists, skipping creation";
@@ -174,12 +184,12 @@ void database::save(QString text, QClipboard::Mode mode){
 
     __transaction();
 
+    // Look up existing text_id
     QSqlQuery query_text_id;
     query_text_id.prepare("SELECT id FROM texts WHERE text=?");
     query_text_id.addBindValue(text);
-    query_text_id.exec();
 
-    if(!query_text_id.isActive()){
+    if(!query_text_id.exec()){
         qWarning() << "SQL SELECT text_id ERROR: " << query_text_id.lastError().text();
         __rollback();
         return;
@@ -188,28 +198,28 @@ void database::save(QString text, QClipboard::Mode mode){
     if(query_text_id.next()){
         text_id = query_text_id.value(0).toULongLong();
         qDebug()<<"Found previously selected text "<<text_id;
-    }else{
+    } else {
+        // Insert new text record
         QSqlQuery query_insert_text;
-        query_insert_text.prepare("INSERT INTO texts (TEXT) VALUES(?);");
+        query_insert_text.prepare("INSERT INTO texts (text) VALUES(?)");
         query_insert_text.addBindValue(text);
-        query_insert_text.exec();
 
-
-        if(!query_insert_text.isActive()){
+        if(!query_insert_text.exec()){
             qWarning() << "SQL INSERT text ERROR: " << query_insert_text.lastError().text();
             __rollback();
             return;
         }
-        query_insert_text.clear();
-        query_insert_text.exec("SELECT last_insert_rowid();");
-        if(query_insert_text.next()){
-            text_id = query_insert_text.value(0).toULongLong();
-            qDebug()<<"New text_id="<<text_id;
-        }else{
-            qWarning()<<"ERROR: Can't find text_id of INSERT";
+
+        // Get the inserted text_id using Qt's built-in method (works with SQLite)
+        text_id = query_insert_text.lastInsertId().toULongLong();
+
+        if(text_id == 0){
+            qWarning() << "ERROR: Invalid text_id returned from INSERT";
             __rollback();
             return;
         }
+
+        qDebug()<<"New text_id="<<text_id;
     }
 
     if( 0 == text_id ){
@@ -220,33 +230,36 @@ void database::save(QString text, QClipboard::Mode mode){
 
     qint64 now = QDateTime::currentMSecsSinceEpoch();
 
+    // Insert paste record
     QSqlQuery query;
     query.prepare("INSERT INTO pastes (text_id, mode, ts) VALUES (:text_id, :mode, :ts)");
     query.bindValue(":text_id", text_id);
-    query.bindValue(":mode", int(mode));
+    query.bindValue(":mode", static_cast<int>(mode));
     query.bindValue(":ts", now);
-    query.exec();
 
-    if(query.isActive()){
+    if(query.exec()){
         __commit();
         __cleanup();
-    }else{
-        qWarning() << "SQL INSERT ERROR: " << query.lastError().text();
+    } else {
+        qWarning() << "SQL INSERT paste ERROR: " << query.lastError().text();
+        qWarning() << "Failed to insert paste record for text_id=" << text_id << ", mode=" << mode;
         __rollback();
     }
 }
 
 database_entry database::getLast(){
-    QSqlQuery query("SELECT pastes.id as id, text, mode, ts FROM pastes JOIN texts ON (pastes.text_id=texts.id) ORDER BY pastes.id DESC LIMIT 1");
-    query.exec();
+    QSqlQuery query;
+    query.prepare("SELECT pastes.id as id, text, mode, ts FROM pastes JOIN texts ON (pastes.text_id=texts.id) ORDER BY pastes.id DESC LIMIT 1");
+
+    if(!query.exec()){
+        qWarning() << "SQL SELECT getLast ERROR: " << query.lastError().text();
+        database_entry ret;
+        ret.mode = QClipboard::Mode(-1);
+        return ret;
+    }
 
     database_entry ret;
     ret.mode = QClipboard::Mode(-1);
-
-    if(!query.isActive()){
-        qWarning() << "SQL SELECT ERROR: " << query.lastError().text();
-        return ret;
-    }
 
     if(query.first()){
         ret = entryFromQuery(query);
@@ -258,16 +271,18 @@ database_entry database::getLast(){
 QString database::getLast(QClipboard::Mode mode){
     qDebug()<<"getLast("<<mode<<")";
 
-    QSqlQuery query("SELECT text FROM pastes JOIN texts ON (pastes.text_id=texts.id) WHERE mode=? ORDER BY pastes.id DESC LIMIT 1");
-    query.addBindValue(int(mode));
-    query.exec();
+    QSqlQuery query;
+    query.prepare("SELECT text FROM pastes JOIN texts ON (pastes.text_id=texts.id) WHERE mode=? ORDER BY pastes.id DESC LIMIT 1");
+    query.addBindValue(static_cast<int>(mode));
 
-    if(!query.isActive())
-        qWarning() << "SQL SELECT ERROR: " << query.lastError().text();
+    if(!query.exec()){
+        qWarning() << "SQL SELECT getLast(mode) ERROR: " << query.lastError().text();
+        return "";
+    }
 
     if(query.first()){
         return query.value(0).toString();
-    }else{
+    } else {
         return "";
     }
 }
@@ -292,12 +307,13 @@ void database::clearHistory(){
     qDebug()<<"Clearing ALL history entries";
     __transaction();
 
-    QSqlQuery query("DELETE FROM pastes");
-    if(query.isActive()){
+    QSqlQuery query;
+    if(query.exec("DELETE FROM pastes")){
+        qlonglong deletedCount = query.numRowsAffected();
         __commit();
-        qDebug()<<"Cleared all paste entries";
-    }else{
-        qWarning() << "SQL DELETE ERROR: " << query.lastError().text();
+        qDebug()<<"Cleared all paste entries: "<<deletedCount<<" records removed";
+    } else {
+        qWarning() << "SQL DELETE ERROR in clearHistory: " << query.lastError().text();
         __rollback();
     }
 }
