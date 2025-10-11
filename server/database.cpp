@@ -305,23 +305,30 @@ void database::clearHistory(){
 void database::__cleanup(){
     qDebug()<<"Cleaning up for "<<numberEntries<<" entries";
     if( numberEntries < 0 ){
-        qDebug()<<"Nothing to delete";
+        qDebug()<<"Unlimited entries. Nothing to delete";
         return;
     }
 
     __transaction();
 
-    QSqlQuery query(
-        "DELETE FROM texts where id IN ("
-            "SELECT DISTINCT text_id FROM pastes ORDER BY pastes.id DESC LIMIT ?,-1"
-        ")");
+    QSqlQuery query;
+    query.prepare(R"(
+        DELETE FROM texts
+        WHERE id IN (
+            SELECT DISTINCT text_id
+            FROM pastes
+            ORDER BY pastes.id DESC
+            LIMIT ? , -1
+        )
+    )");
     query.addBindValue(numberEntries);
-    query.exec();
 
-    if(query.isActive()){
+    if(query.exec()){
+        qlonglong deletedCount = query.numRowsAffected();
+        qDebug()<<"Cleanup completed: deleted "<<deletedCount<<" orphaned text records";
         __commit();
     }else{
-        qWarning() << "SQL DELETE ERROR: " << query.lastError().text();
+        qWarning() << "SQL DELETE ERROR in cleanup: " << query.lastError().text();
         __rollback();
     }
 }
