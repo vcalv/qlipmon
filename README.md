@@ -17,12 +17,34 @@ The rofi plugin can be selected by running `rofi -modi qlipmon -show qlipmon`.
 
 After running each of the components the ini files should be populated with sensible default values.
 
+## Database Persistence
+
+Qlipmon now supports persistent storage of clipboard history using SQLite database. By default, clipboard history is stored in memory only, but you can enable disk-based storage for persistence across reboots.
+
+### Database Configuration Options
+
+**Command Line Options:**
+- `--disk-database true/false` - Enable or disable disk database (default: false)
+- `--database-path <path>` - Set database file path (default: ~/.local/share/qlipmon/qlipmon.db)
+
+**Configuration File Options:**
+The server configuration file (`$HOME/.config/qlipmon/server.ini`) supports these database settings:
+- `use_disk_database = false` - Enable disk database instead of in-memory storage
+- `database_path = ~/.local/share/qlipmon/qlipmon.db` - Path to the SQLite database file
+
+### Default Database Location
+
+When disk database is enabled without specifying a custom path, the database file is created at:
+`~/.local/share/qlipmon/qlipmon.db`
+
+The directory `~/.local/share/qlipmon/` will be automatically created if it doesn't exist.
+
 There is also a dbus interface that allows you get get previous selections or even change the current one.
 
 Every time a new selection is made, a dbus broadcast is also emitted allowing you to listen for these event and take any action you want.
 Selection broadcast is disabled by default and can be enabled via command line, ini configuration or via dbus interface.
 
-Selections are saved in memory only and for now no persistence is supported,
+Selections are saved in memory by default, but persistent disk storage is now supported via SQLite database.
 
 
 ## Rationale
