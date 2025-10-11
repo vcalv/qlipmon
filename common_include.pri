@@ -11,7 +11,7 @@ INCLUDEPATH += $$PROJECT_ROOT/common
 COMMON_HEADERS_DIR = $$PROJECT_ROOT/common
 
 # Version information
-VERSION = "0.2.0"
+VERSION = "2.0.0"
 APP_NAME = "Qlipmon"
 
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
