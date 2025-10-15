@@ -1,17 +1,22 @@
 #include "qlipdata.h"
 
 #include "config.h"
+#include <QtDBus/QtDBus>
 
 
 RofiData* QlipData::getEntries(){
-    Config config;
-    RofiData *ret = new RofiData;
+    Config* config = new Config();
+    config->load();
+    return getEntries(config);
+}
 
-    config.load();
-    qDebug()<<"loaded config "<<config;
+RofiData* QlipData::getEntries(Config* config){
+    RofiData *ret = new RofiData;
+    ret->config = config;  // Store pointer to the configured config
+    qDebug()<<"using configured config";
 
     QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
-    QDBusReply reply = _interface.getTextHistory(config.kind, config.duplicates);
+    QDBusReply reply = _interface.getTextHistory(config->kind, config->duplicates);
 
     if(reply.isValid()){
         ret->error = false;
@@ -20,8 +25,8 @@ RofiData* QlipData::getEntries(){
         auto &entries = ret->entries;
 
         qDebug()<<"Got a list with "<<entries.size()<<" elements";
-        if(config.numberEntries > 0 && entries.size() > config.numberEntries){
-            entries.erase(entries.begin() + config.numberEntries, entries.end());
+        if(config->numberEntries > 0 && entries.size() > config->numberEntries){
+            entries.erase(entries.begin() + config->numberEntries, entries.end());
         }
     }else{
         qWarning()<<"Error getting clipboard data: "<<reply.error();
@@ -33,9 +38,13 @@ RofiData* QlipData::getEntries(){
 }
 
 void QlipData::setText(const QString &txt){
-    QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
-    Config config;
-    config.load();
+    Config* config = new Config();
+    config->load();
+    setText(txt, config);
+    delete config;  // Clean up since this is a one-off operation
+}
 
-    _interface.setText(txt, config.kind);
+void QlipData::setText(const QString &txt, Config* config){
+    QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
+    _interface.setText(txt, config->kind);
 }

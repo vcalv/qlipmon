@@ -24,11 +24,9 @@ static const QString ESC_SYMBOL = QStringLiteral("␛");
  * @param tabString Reference to store the tab display string
  * @param newlineString Reference to store the newline display string
  */
-static void getDisplayStrings(QString& tabString, QString& newlineString) {
-    Config config;
-    config.load();
-    tabString = config.tabDisplayString;
-    newlineString = config.newlineDisplayString;
+static void getDisplayStrings(const RofiData* data, QString& tabString, QString& newlineString) {
+    tabString = data->config->tabDisplayString;
+    newlineString = data->config->newlineDisplayString;
 }
 
 /**
@@ -37,7 +35,7 @@ static void getDisplayStrings(QString& tabString, QString& newlineString) {
  * @param input The raw clipboard content string
  * @return QString with control characters replaced by visual symbols
  */
-static QString sanitizeForDisplay(const QString& input) {
+static QString sanitizeForDisplay(const QString& input, const RofiData* data) {
     if (input.isEmpty()) {
         return input;
     }
@@ -46,7 +44,7 @@ static QString sanitizeForDisplay(const QString& input) {
 
     // Get configured display strings for common characters
     QString tabDisplay, newlineDisplay;
-    getDisplayStrings(tabDisplay, newlineDisplay);
+    getDisplayStrings(data, tabDisplay, newlineDisplay);
 
     // Replace control characters with visual representations
     sanitized.replace(QLatin1String("\n"), newlineDisplay);
@@ -80,7 +78,12 @@ static char* QStringDupa(const QString& line){
  */
 static int qlipmon_mode_init(Mode *sw) {
   if (mode_get_private_data(sw) == nullptr) {
-    RofiData *data = QlipData::getEntries();
+    // Apply command line overrides once during plugin initialization
+    Config* config = new Config();  // Create on heap
+    config->load();
+    config->applyArgOverrides();
+
+    RofiData *data = QlipData::getEntries(config);
     mode_set_private_data(sw, reinterpret_cast<void *>(data));
   }
   return TRUE;
@@ -135,7 +138,7 @@ static ModeMode qlipmon_mode_result(
         if(!data->error){
             const QString selected = data->entries.value(selected_line);
             qDebug()<<"Selected = " << selected;
-            QlipData::setText(selected);
+            QlipData::setText(selected, data->config);
         }
         retv = MODE_EXIT;
     } else if ((mretv & MENU_ENTRY_DELETE) == MENU_ENTRY_DELETE) {
@@ -152,7 +155,8 @@ static ModeMode qlipmon_mode_result(
 static void qlipmon_mode_destroy(Mode *sw) {
   RofiData* data = RofiDataFromMode(sw);
   if (data != nullptr) {
-      delete  data;
+      delete data->config;  // Delete the Config object first
+      delete data;          // Then delete the RofiData container
   }
 }
 
@@ -222,7 +226,7 @@ static char *get_display_value(
 
   // Apply comprehensive character replacements for better display
   // This replaces the original two replace() calls with a single, more efficient function
-  QString sanitizedLine = sanitizeForDisplay(line);
+  QString sanitizedLine = sanitizeForDisplay(line, data);
 
   return QStringDupa(sanitizedLine);
 
