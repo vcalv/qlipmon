@@ -5,9 +5,24 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QFile>
+#include <stdexcept>
+
+// Static singleton instance and mutex
+Config& Config::instance() {
+    static Config instance;
+    return instance;
+}
+
+QMutex Config::configMutex;
+
+Config::~Config() {
+    qDebug() << "Server Config singleton destroyed";
+}
 
 
 void Config::loadArgs(const QStringList &args){
+        ensureNotFrozen("load CLI arguments");
+        QMutexLocker locker(&configMutex);
         load(); // load values from config
 
         QCommandLineParser parser;
@@ -70,6 +85,9 @@ void Config::loadArgs(const QStringList &args){
 
         if (parser.isSet(saveOption))
             save();
+
+        // Configuration is now complete and immutable
+        freeze();
 }
 
 void Config::loadArgs(int argc, char* argv[]){
@@ -78,6 +96,9 @@ void Config::loadArgs(int argc, char* argv[]){
 }
 
 void Config::load(){
+    ensureNotFrozen("load configuration from file");
+    QMutexLocker locker(&configMutex);
+
     QSettings* settings = CommonConfig::getSettings("qlipmon", "server");
 
     // Ensure config directory exists and create default config if needed
@@ -118,4 +139,22 @@ void Config::save(){
 QDebug &operator<<(QDebug &out, const Config &c){
     out<<"Config{ entries:"<<c.numberEntries<<", broadcast: "<<c.broadcast<<", "<<" dbus: "<<c.dbus<<", disk_db: "<<c.useDiskDatabase<<", db_path: "<<c.databasePath<<"}";
     return out;
+}
+
+void Config::freeze() {
+    if (!frozen) {
+        frozen = true;
+        qDebug() << "Configuration frozen - now immutable";
+    }
+}
+
+bool Config::isFrozen() const {
+    return frozen;
+}
+
+void Config::ensureNotFrozen(const QString& operation) const {
+    if (frozen) {
+        qCritical() << "Configuration is frozen - cannot " << operation;
+        throw std::runtime_error(qPrintable("Configuration is immutable after CLI parsing. Cannot " + operation));
+    }
 }

@@ -2,13 +2,29 @@
 
 #include <QFileInfo>
 #include <QSettings>
+#include <stdexcept>
 
 extern "C" {
 #include <rofi/helper.h>
 }
 
+// Static singleton instance and mutex
+Config& Config::instance() {
+    static Config instance;
+    return instance;
+}
+
+QMutex Config::configMutex;
+
+Config::~Config() {
+    qDebug() << "Rofi Config singleton destroyed";
+}
+
 
 void Config::load(){
+    ensureNotFrozen("load configuration from file");
+    QMutexLocker locker(&configMutex);
+
     QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
 
     // Ensure config directory exists and create default config if needed
@@ -39,6 +55,9 @@ void Config::save(){
 }
 
 void Config::applyArgOverrides() {
+    ensureNotFrozen("apply CLI argument overrides");
+    QMutexLocker locker(&configMutex);
+
     // Store original values for logging
     int originalNumberEntries = numberEntries;
     bool originalDuplicates = duplicates;
@@ -84,23 +103,33 @@ void Config::applyArgOverrides() {
     applyBoolOverride("-qlipmon-duplicates", duplicates, originalDuplicates);
     applyStringOverride("-qlipmon-tab-string", tabDisplayString, originalTabString);
     applyStringOverride("-qlipmon-newline-string", newlineDisplayString, originalNewlineString);
+
+    // Configuration is now complete and immutable
+    freeze();
 }
 
-Config::~Config(){
-    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
-    const QString fileName = settings->fileName();
-    QFileInfo finfo(fileName);
-
-    if(finfo.exists() && finfo.isFile()){
-        qDebug()<<fileName<<" exists so not saving config";
-    }else{
-        save();
-    }
-}
 
 QDebug &operator<<(QDebug &out, const Config &c){
     out<<"Config{ number:"<<c.numberEntries<<", duplicates: "<<c.duplicates<<", "
        <<" kind: "<<c.kind<<", tab_string: "<<c.tabDisplayString
        <<", newline_string: "<<c.newlineDisplayString<<"}";
     return out;
+}
+
+void Config::freeze() {
+    if (!frozen) {
+        frozen = true;
+        qDebug() << "Configuration frozen - now immutable";
+    }
+}
+
+bool Config::isFrozen() const {
+    return frozen;
+}
+
+void Config::ensureNotFrozen(const QString& operation) const {
+    if (frozen) {
+        qCritical() << "Configuration is frozen - cannot " << operation;
+        throw std::runtime_error(qPrintable("Configuration is immutable after CLI parsing. Cannot " + operation));
+    }
 }

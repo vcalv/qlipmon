@@ -15,16 +15,14 @@ public:
     QStringList entries;
     bool error;
     QString errorString;
-    Config* config;  // Store pointer to configured config to avoid repeated loading
+    // Config is now accessed via singleton pattern - no need to store pointer
 };
 
 class QlipData
 {
 public:
     static RofiData* getEntries();
-    static RofiData* getEntries(Config* config);
     static void setText(const QString &txt);
-    static void setText(const QString &txt, Config* config);
 };
 
 #endif // QLIPDATA_H

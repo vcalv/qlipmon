@@ -17,9 +17,8 @@ public:
         setApplicationName(APP_NAME);
         setApplicationVersion(APP_VERSION);
 
-        Config config;
-        config.loadArgs(argc, argv);
-        qlipmon = new QlipMon(config);
+        Config::instance().loadArgs(argc, argv);
+        qlipmon = new QlipMon(Config::instance());
 
         qInfo()<<"Application name: " << applicationName();
         qInfo()<<"Application version: " << applicationVersion();

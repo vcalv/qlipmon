@@ -24,9 +24,9 @@ static const QString ESC_SYMBOL = QStringLiteral("␛");
  * @param tabString Reference to store the tab display string
  * @param newlineString Reference to store the newline display string
  */
-static void getDisplayStrings(const RofiData* data, QString& tabString, QString& newlineString) {
-    tabString = data->config->tabDisplayString;
-    newlineString = data->config->newlineDisplayString;
+static void getDisplayStrings(QString& tabString, QString& newlineString) {
+    tabString = Config::instance().tabDisplayString;
+    newlineString = Config::instance().newlineDisplayString;
 }
 
 /**
@@ -44,7 +44,7 @@ static QString sanitizeForDisplay(const QString& input, const RofiData* data) {
 
     // Get configured display strings for common characters
     QString tabDisplay, newlineDisplay;
-    getDisplayStrings(data, tabDisplay, newlineDisplay);
+    getDisplayStrings(tabDisplay, newlineDisplay);
 
     // Replace control characters with visual representations
     sanitized.replace(QLatin1String("\n"), newlineDisplay);
@@ -79,11 +79,10 @@ static char* QStringDupa(const QString& line){
 static int qlipmon_mode_init(Mode *sw) {
   if (mode_get_private_data(sw) == nullptr) {
     // Apply command line overrides once during plugin initialization
-    Config* config = new Config();  // Create on heap
-    config->load();
-    config->applyArgOverrides();
+    Config::instance().load();
+    Config::instance().applyArgOverrides();
 
-    RofiData *data = QlipData::getEntries(config);
+    RofiData *data = QlipData::getEntries();
     mode_set_private_data(sw, reinterpret_cast<void *>(data));
   }
   return TRUE;
@@ -138,7 +137,7 @@ static ModeMode qlipmon_mode_result(
         if(!data->error){
             const QString selected = data->entries.value(selected_line);
             qDebug()<<"Selected = " << selected;
-            QlipData::setText(selected, data->config);
+            QlipData::setText(selected);
         }
         retv = MODE_EXIT;
     } else if ((mretv & MENU_ENTRY_DELETE) == MENU_ENTRY_DELETE) {
@@ -155,8 +154,7 @@ static ModeMode qlipmon_mode_result(
 static void qlipmon_mode_destroy(Mode *sw) {
   RofiData* data = RofiDataFromMode(sw);
   if (data != nullptr) {
-      delete data->config;  // Delete the Config object first
-      delete data;          // Then delete the RofiData container
+      delete data;          // Delete the RofiData container (Config is now singleton)
   }
 }
 
