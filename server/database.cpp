@@ -18,10 +18,7 @@ std::unique_ptr<database> database::databaseInstance;
 static QString staticConnectionName;
 
 static QSqlDatabase __database(){
-     if (staticConnectionName.isEmpty()) {
-         return QSqlDatabase::database(); // fallback to default
-     }
-     return QSqlDatabase::database(staticConnectionName);
+     return QSqlDatabase::database();
  }
 
 static bool __transaction(){
@@ -77,24 +74,20 @@ static QList<database_entry> entriesFromSQL(const QString &sql){
 }
 
 database::~database(){
-    qDebug()<<"~database";
-    qDebug()<<"Closing database connection: " << staticConnectionName;
+     qDebug()<<"~database";
+     qDebug()<<"Closing database";
+     QSqlDatabase db = QSqlDatabase::database();
 
-    if (!staticConnectionName.isEmpty()) {
-        QSqlDatabase db = QSqlDatabase::database(staticConnectionName);
+     if (db.isValid() && db.isOpen()) {
+         db.close();
 
-        if (db.isValid() && db.isOpen()) {
-            db.close();
-            qDebug()<<"Database connection closed successfully";
-        }
-
-        // Remove the database connection
-        QSqlDatabase::removeDatabase(staticConnectionName);
-        qDebug()<<"Database connection removed: " << staticConnectionName;
-
-        staticConnectionName.clear();
-    }
-}
+         // Verify database is actually closed
+         if(db.isOpen()){
+             qCritical() << "Database still open after close attempt!";
+             qCritical() << "Database connection name: " << db.connectionName();
+         }
+     }
+ }
 
  // Private constructor - only called by factory method
  database::database(int numberEntries, bool useDiskDatabase, const QString& databasePath)
@@ -103,9 +96,7 @@ database::~database(){
 
     qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
     const QString DRIVER("QSQLITE");
-    const QString CONNECTION_NAME = "qlipmon_database_" + QString::number((quintptr)this, 16);
-    QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER, CONNECTION_NAME);
-    staticConnectionName = CONNECTION_NAME;
+    QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
 
     if (useDiskDatabase) {
         qDebug() << "Using disk database at path:" << databasePath;
@@ -179,13 +170,13 @@ database::~database(){
         };
 
         for (const QString& DDL: DDLs){
-             QSqlQuery query;
-             if(!query.exec(DDL)){
-                 qCritical() << "SQL CREATE ERROR: " << query.lastError().text();
-                 qCritical() << "Failed DDL: " << DDL;
-                 return;
-             }
-         }
+              QSqlQuery query;
+              if(!query.exec(DDL)){
+                  qCritical() << "SQL CREATE ERROR: " << query.lastError().text();
+                  qCritical() << "Failed DDL: " << DDL;
+                  return;
+              }
+          }
         qDebug() << "Database schema created successfully";
     } else {
         qDebug() << "Database schema already exists, skipping creation";
