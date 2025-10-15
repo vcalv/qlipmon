@@ -1,36 +1,52 @@
 #include "database.h"
+#include "config.h"
 #include <QSqlDatabase>
 #include <QtSql>
 #include <QDateTime>
 #include <QList>
 #include <QClipboard>
-#include <QMutex>
-#include <QMutexLocker>
-#include <QAtomicInt>
 #include <QFileInfo>
 #include <QDir>
 #include <QStandardPaths>
 
 #include <QDebug>
 
-static QMutex __mtx;
-static QAtomicInt __count(0);
+// Static instance storage
+std::unique_ptr<database> database::databaseInstance;
+
+// Static database connection storage to ensure proper cleanup order
+static QString staticConnectionName;
 
 static QSqlDatabase __database(){
-    return QSqlDatabase::database();
-}
+     if (staticConnectionName.isEmpty()) {
+         return QSqlDatabase::database(); // fallback to default
+     }
+     return QSqlDatabase::database(staticConnectionName);
+ }
 
 static bool __transaction(){
-    return __database().transaction();
-}
+     QSqlDatabase db = __database();
+     if (db.isValid() && db.isOpen()) {
+         return db.transaction();
+     }
+     return false;
+ }
 
 static bool __commit(){
-    return __database().commit();
-}
+     QSqlDatabase db = __database();
+     if (db.isValid() && db.isOpen()) {
+         return db.commit();
+     }
+     return false;
+ }
 
 static bool __rollback(){
-    return __database().rollback();
-}
+     QSqlDatabase db = __database();
+     if (db.isValid() && db.isOpen()) {
+         return db.rollback();
+     }
+     return false;
+ }
 
 static database_entry entryFromQuery(QSqlQuery& query){
     database_entry ret;
@@ -62,35 +78,34 @@ static QList<database_entry> entriesFromSQL(const QString &sql){
 
 database::~database(){
     qDebug()<<"~database";
-    QMutexLocker locker(&__mtx);
+    qDebug()<<"Closing database connection: " << staticConnectionName;
 
-    if(0==--__count){
-        qDebug()<<"Closing database";
-        QSqlDatabase db = __database();
+    if (!staticConnectionName.isEmpty()) {
+        QSqlDatabase db = QSqlDatabase::database(staticConnectionName);
 
-        db.close();
-
-        // Verify database is actually closed
-        if(db.isOpen()){
-            qCritical() << "Database still open after close attempt!";
-            qCritical() << "Database connection name: " << db.connectionName();
+        if (db.isValid() && db.isOpen()) {
+            db.close();
+            qDebug()<<"Database connection closed successfully";
         }
+
+        // Remove the database connection
+        QSqlDatabase::removeDatabase(staticConnectionName);
+        qDebug()<<"Database connection removed: " << staticConnectionName;
+
+        staticConnectionName.clear();
     }
 }
 
-database::database(const int _numberEntries, bool useDiskDatabase, const QString& databasePath){
-    numberEntries = _numberEntries;
-    QMutexLocker locker(&__mtx);
-
-    if (__count){
-        ++__count;
-        qDebug()<<"Database already initalized [count = "<<__count<<"]";;
-        return;
-    }
+ // Private constructor - only called by factory method
+ database::database(int numberEntries, bool useDiskDatabase, const QString& databasePath)
+     : numberEntries(numberEntries)
+ {
 
     qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
     const QString DRIVER("QSQLITE");
-    QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
+    const QString CONNECTION_NAME = "qlipmon_database_" + QString::number((quintptr)this, 16);
+    QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER, CONNECTION_NAME);
+    staticConnectionName = CONNECTION_NAME;
 
     if (useDiskDatabase) {
         qDebug() << "Using disk database at path:" << databasePath;
@@ -130,6 +145,14 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
         return;
     }
 
+    // Ensure foreign key constraints are enabled
+    QSqlQuery enableFK;
+    if(!enableFK.exec("PRAGMA foreign_keys = ON")){
+        qWarning() << "Failed to enable foreign key constraints: " << enableFK.lastError().text();
+    } else {
+        qDebug() << "Foreign key constraints enabled";
+    }
+
     // Check if tables already exist
     QSqlQuery checkTables;
     if(!checkTables.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'")){
@@ -148,7 +171,7 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
               ");",
              "CREATE TABLE pastes ("
                  "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                 "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
+                 "text_id INTEGER REFERENCES texts(id),"
                  "mode INTEGER NOT NULL,"
                  "ts INTEGER DEFAULT NULL"
               ");",
@@ -168,9 +191,40 @@ database::database(const int _numberEntries, bool useDiskDatabase, const QString
         qDebug() << "Database schema already exists, skipping creation";
     }
 
-    ++__count;;
-
+    qDebug() << "Database constructed with:"
+             << "entries=" << numberEntries
+             << "disk_db=" << useDiskDatabase
+             << "db_path=" << databasePath;
 }
+
+// Factory method for database initialization using Config
+database& database::createFromConfig() {
+    const Config& config = Config::instance();
+
+    // Create and store the database instance
+    databaseInstance = std::unique_ptr<database>(
+        new database(config.numberEntries, config.useDiskDatabase, config.databasePath)
+    );
+
+    qDebug() << "Database created from Config";
+    return *databaseInstance;
+}
+
+// Singleton access
+ database& database::instance() {
+     // In normal usage, createFromConfig() should be called first
+     // If databaseInstance is null, we need to handle this gracefully
+     if (!databaseInstance) {
+         qCritical() << "Database not initialized! This is a programming error.";
+         qCritical() << "Call database::createFromConfig() before using database::instance()";
+         // Force a crash in debug mode to catch this error early
+         Q_ASSERT(databaseInstance != nullptr);
+         // In release mode, provide a safe fallback (though this indicates a bug)
+         static database fallbackDatabase(500, false, ":memory:");
+         return fallbackDatabase;
+     }
+     return *databaseInstance;
+ }
 
 void database::save(QString text, QClipboard::Mode mode){
     qDebug()<<"save("<<text<<", "<<mode<<")";
@@ -325,6 +379,16 @@ void database::__cleanup(){
         return;
     }
 
+    // Debug: Check how many pastes and texts we have
+    QSqlQuery countQuery;
+    countQuery.exec("SELECT COUNT(*) FROM pastes");
+    int pasteCount = countQuery.next() ? countQuery.value(0).toInt() : 0;
+
+    countQuery.exec("SELECT COUNT(*) FROM texts");
+    int textCount = countQuery.next() ? countQuery.value(0).toInt() : 0;
+
+    qDebug()<<"Database state: "<<pasteCount<<" pastes, "<<textCount<<" texts";
+
     __transaction();
 
     QSqlQuery query;
@@ -334,7 +398,7 @@ void database::__cleanup(){
             SELECT DISTINCT text_id
             FROM pastes
             ORDER BY pastes.id DESC
-            LIMIT ? , -1
+            LIMIT -1 OFFSET ?
         )
     )");
     query.addBindValue(numberEntries);
@@ -345,6 +409,7 @@ void database::__cleanup(){
         __commit();
     }else{
         qWarning() << "SQL DELETE ERROR in cleanup: " << query.lastError().text();
+        qWarning() << "Failed query: " << query.lastQuery();
         __rollback();
     }
 }

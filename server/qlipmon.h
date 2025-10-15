@@ -37,7 +37,6 @@ signals:
 
 private:
     QClipboard* clip;
-    database db;
     bool _broadcast;
     QlipmonAdaptor* dbusAdaptor = nullptr;
 

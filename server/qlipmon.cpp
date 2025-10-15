@@ -10,7 +10,9 @@
 #include <QSettings>
 #include <QtDBus/QDBusConnection>
 
-QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent), db(config.numberEntries, config.useDiskDatabase, config.databasePath){
+QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent){
+    // Initialize the database singleton using the config
+    database::createFromConfig();
         clip = QGuiApplication::clipboard();
         QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
 
@@ -37,18 +39,18 @@ void QlipMon::changed(QClipboard::Mode mode){
         qDebug()<<"NOT broadcasting";
     }
 
-    db.save(text, mode);
+    database::instance().save(text, mode);
 }
 
 QString QlipMon::getLastText(int mode){
-    return db.getLast(QClipboard::Mode(mode));
-}
+     return database::instance().getLast(QClipboard::Mode(mode));
+ }
 
 QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
     const auto mode = QClipboard::Mode(_mode);
     QStringList ret;
 
-    auto entries = duplicates ? db.getDuplicateEntries(): db.getUniqueEntries();
+    auto entries = duplicates ? database::instance().getDuplicateEntries(): database::instance().getUniqueEntries();
 
     for (const database_entry &entry : entries){
         if(_mode < 0 || entry.mode == mode){
@@ -59,8 +61,8 @@ QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
 }
 
 QList<database_entry> QlipMon::getHistory(){
-    return db.getUniqueEntries();
-}
+     return database::instance().getUniqueEntries();
+ }
 
 void QlipMon::setText(const QString &text, int mode){
     qDebug()<<"setText("<<text<<")";
@@ -75,11 +77,11 @@ void QlipMon::setText(const QString &text, int mode){
 }
 
 void QlipMon::clearHistory(){
-    qDebug()<<"clearHistory()";
-    db.clearHistory();
-}
+     qDebug()<<"clearHistory()";
+     database::instance().clearHistory();
+ }
 
 int QlipMon::getEntryCount(){
-    auto entries = db.getUniqueEntries();
-    return entries.count();
-}
+     auto entries = database::instance().getUniqueEntries();
+     return entries.count();
+ }
