@@ -36,7 +36,7 @@ static void getDisplayStrings(QString& tabString, QString& newlineString) {
  * @param input The raw clipboard content string
  * @return QString with control characters replaced by visual symbols
  */
-static QString sanitizeForDisplay(const QString& input, const RofiData* data) {
+static QString sanitizeForDisplay(const QString& input) {
     if (input.isEmpty()) {
         return input;
     }
@@ -80,7 +80,7 @@ static char* QStringDupa(const QString& line){
 static int qlipmon_mode_init(Mode *sw) {
   if (mode_get_private_data(sw) == nullptr) {
     // Create config from CLI once during plugin initialization
-    const Config& config = Config::createFromCLI();
+    Config::createFromCLI();
 
     RofiData *data = QlipData::getEntries();
     mode_set_private_data(sw, reinterpret_cast<void *>(data));
@@ -224,7 +224,7 @@ static char *get_display_value(
 
   // Apply comprehensive character replacements for better display
   // This replaces the original two replace() calls with a single, more efficient function
-  QString sanitizedLine = sanitizeForDisplay(line, data);
+  QString sanitizedLine = sanitizeForDisplay(line);
 
   return QStringDupa(sanitizedLine);
 
