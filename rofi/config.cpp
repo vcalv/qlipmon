@@ -3,6 +3,10 @@
 #include <QFileInfo>
 #include <QSettings>
 
+extern "C" {
+#include <rofi/helper.h>
+}
+
 
 void Config::load(){
     QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
@@ -32,6 +36,54 @@ void Config::save(){
     qDebug()<<"Saving config to "<<settings->fileName();
     settings->sync();
     qDebug()<<"Saved";
+}
+
+void Config::applyArgOverrides() {
+    // Store original values for logging
+    int originalNumberEntries = numberEntries;
+    bool originalDuplicates = duplicates;
+    int originalKind = kind;
+    QString originalTabString = tabDisplayString;
+    QString originalNewlineString = newlineDisplayString;
+
+    // Helper function to apply integer argument override with logging
+    auto applyIntOverride = [&](const char* argName, int& target, int original) {
+        int value = 0;
+        if (find_arg_int(argName, &value)) {
+            target = value;
+            if (target != original) {
+                qInfo() << "Command line override:" << argName << "=" << target << "(was" << original << ")";
+            }
+        }
+    };
+
+    // Helper function to apply string argument override with logging
+    auto applyStringOverride = [&](const char* argName, QString& target, const QString& original) {
+        char *value = nullptr;
+        if (find_arg_str(argName, &value)) {
+            target = QString(value);
+            g_free(value);
+            if (target != original) {
+                qInfo() << "Command line override:" << argName << "='" << target << "'(was'" << original << "')";
+            }
+        }
+    };
+
+    // Helper function to apply boolean argument override using string helper
+    auto applyBoolOverride = [&](const char* argName, bool& target, bool original) {
+        QString boolStr;
+        applyStringOverride(argName, boolStr, original ? "true" : "false");
+        if (!boolStr.isEmpty()) {
+            target = boolStr.toLower() == "true";
+        }
+    };
+
+    // Apply all argument overrides using helper functions
+    applyIntOverride("-qlipmon-max-items", numberEntries, originalNumberEntries);
+    applyIntOverride("-qlipmon-kind", kind, originalKind);
+    applyBoolOverride("-qlipmon-duplicates", duplicates, originalDuplicates);
+    applyStringOverride("-qlipmon-tab-string", tabDisplayString, originalTabString);
+    applyStringOverride("-qlipmon-newline-string", newlineDisplayString, originalNewlineString);
 }
 
 Config::~Config(){

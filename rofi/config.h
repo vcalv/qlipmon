@@ -19,6 +19,11 @@ class Config : public CommonConfig {
      //void save(const QString& path);
      void save();
 
+     /**
+      * @brief Apply command line argument overrides to configuration
+      */
+     void applyArgOverrides();
+
      ~Config();
  };
 
