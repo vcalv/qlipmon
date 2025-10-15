@@ -162,11 +162,18 @@ database::~database(){
               ");",
              "CREATE TABLE pastes ("
                  "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                 "text_id INTEGER REFERENCES texts(id),"
+                 "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
                  "mode INTEGER NOT NULL,"
                  "ts INTEGER DEFAULT NULL"
-              ");",
-             "CREATE UNIQUE INDEX idx_texts_text ON texts(text);"
+             ");",
+             "CREATE UNIQUE INDEX idx_texts_text ON texts(text);",
+             "CREATE INDEX idx_pastes_text_id ON pastes(text_id);",
+             "CREATE TRIGGER cleanup_orphaned_texts "
+                 "AFTER DELETE ON pastes "
+                 "BEGIN "
+                     "DELETE FROM texts "
+                     "WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes); "
+                 "END;"
         };
 
         for (const QString& DDL: DDLs){
@@ -180,6 +187,20 @@ database::~database(){
         qDebug() << "Database schema created successfully";
     } else {
         qDebug() << "Database schema already exists, skipping creation";
+    }
+
+    // Clean up orphaned texts on startup
+    qDebug() << "Checking for orphaned text records on startup...";
+    QSqlQuery cleanupQuery;
+    if(cleanupQuery.exec("DELETE FROM texts WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes)")){
+        int cleanedCount = cleanupQuery.numRowsAffected();
+        if(cleanedCount > 0){
+            qInfo() << "Startup cleanup: deleted" << cleanedCount << "orphaned text records";
+        } else {
+            qDebug() << "Startup cleanup: no orphaned text records found";
+        }
+    } else {
+        qWarning() << "Startup cleanup failed:" << cleanupQuery.lastError().text();
     }
 
     qDebug() << "Database constructed with:"
