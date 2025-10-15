@@ -11,7 +11,7 @@ There's two components:
 
 Configuration for the server can be done either via the command line (`qlipmon --help`) or via ini file stored in `$HOME/.config/qlipmon/server.ini`
 
-The rofi plugin can only be configured via ini file stored in `$HOME/.config/qlipmon/rofi.ini`
+The rofi plugin can be configured via ini file stored in `$HOME/.config/qlipmon/rofi.ini` or command line arguments.
 
 The rofi plugin can be selected by running `rofi -modi qlipmon -show qlipmon`.
 
@@ -38,6 +38,22 @@ When disk database is enabled without specifying a custom path, the database fil
 `~/.local/share/qlipmon/qlipmon.db`
 
 The directory `~/.local/share/qlipmon/` will be automatically created if it doesn't exist.
+
+## Rofi Plugin Command Line Options
+
+The rofi plugin supports these command line options to override configuration:
+
+- `-qlipmon-max-items <number>` - Maximum number of entries to display (default: 0 for unlimited)
+- `-qlipmon-duplicates <true/false>` - Show duplicate entries (default: false)
+- `-qlipmon-kind <number>` - Clipboard mode filter (-1 for all, 0 for Clipboard, 1 for Selection)
+- `-qlipmon-tab-string <string>` - Display string for tab characters (default: ⭾)
+- `-qlipmon-newline-string <string>` - Display string for newline characters (default: ⏎)
+
+**Examples:**
+```bash
+rofi -modi qlipmon -show qlipmon -qlipmon-max-items 50
+rofi -modi qlipmon -show qlipmon -qlipmon-tab-string "→" -qlipmon-newline-string "¶"
+```
 
 There is also a dbus interface that allows you get get previous selections or even change the current one.
 
