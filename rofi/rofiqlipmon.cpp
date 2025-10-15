@@ -25,8 +25,9 @@ static const QString ESC_SYMBOL = QStringLiteral("␛");
  * @param newlineString Reference to store the newline display string
  */
 static void getDisplayStrings(QString& tabString, QString& newlineString) {
-    tabString = Config::instance().tabDisplayString;
-    newlineString = Config::instance().newlineDisplayString;
+    const Config& config = Config::instance();
+    tabString = config.tabDisplayString;
+    newlineString = config.newlineDisplayString;
 }
 
 /**
@@ -78,9 +79,8 @@ static char* QStringDupa(const QString& line){
  */
 static int qlipmon_mode_init(Mode *sw) {
   if (mode_get_private_data(sw) == nullptr) {
-    // Apply command line overrides once during plugin initialization
-    Config::instance().load();
-    Config::instance().applyArgOverrides();
+    // Create config from CLI once during plugin initialization
+    const Config& config = Config::createFromCLI();
 
     RofiData *data = QlipData::getEntries();
     mode_set_private_data(sw, reinterpret_cast<void *>(data));

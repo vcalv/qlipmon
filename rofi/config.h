@@ -3,47 +3,40 @@
 
 #include <QDebug>
 #include <QMutex>
+#include <memory>
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {
     public:
-      // Singleton access
-      static Config& instance();
+      // Factory method for CLI construction - only way to create config
+      static const Config& createFromCLI();
+
+      // Const singleton access
+      static const Config& instance();
 
       // Delete copy constructor and assignment operator
       Config(const Config&) = delete;
       Config& operator=(const Config&) = delete;
 
-      // Configuration properties (public for backward compatibility)
-      bool duplicates = false;
-      int kind = -1; // -1 => all;
-      int numberEntries = 0; // infinite
+      // Immutable configuration properties
+      const bool duplicates;
+      const int kind; // -1 => all;
+      const int numberEntries; // infinite
 
       // Configurable display strings for common control characters
-      QString tabDisplayString = QStringLiteral("⭾");
-      QString newlineDisplayString = QStringLiteral("⏎");
+      const QString tabDisplayString;
+      const QString newlineDisplayString;
 
-      // Immutability control
-      void freeze(); // Make configuration immutable after CLI parsing
-      bool isFrozen() const; // Check if configuration is frozen
-      void ensureNotFrozen(const QString& operation) const; // Throw if frozen
+      //void load(const QString& path);
+      void save() const;
 
-     //void load(const QString& path);
-     void load();
-     //void save(const QString& path);
-     void save();
+    private:
+      // Private constructor - only called by factory method
+      Config(bool duplicates, int kind, int numberEntries,
+             QString tabDisplayString, QString newlineDisplayString);
 
-     /**
-      * @brief Apply command line argument overrides to configuration
-      */
-     void applyArgOverrides();
-
-     ~Config();
-
-   private:
-     Config() = default;
-     bool frozen = false; // Tracks if configuration is immutable
-     static QMutex configMutex; // Protects configuration loading and CLI parsing
+      // Static instance storage
+     static std::unique_ptr<const Config> configInstance;
  };
 
 QDebug &operator<<(QDebug &out, const Config &c);

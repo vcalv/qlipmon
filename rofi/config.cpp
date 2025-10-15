@@ -2,63 +2,50 @@
 
 #include <QFileInfo>
 #include <QSettings>
-#include <stdexcept>
 
 extern "C" {
 #include <rofi/helper.h>
 }
 
-// Static singleton instance and mutex
-Config& Config::instance() {
-    static Config instance;
-    return instance;
+// Static instance storage
+std::unique_ptr<const Config> Config::configInstance;
+
+// Private constructor
+Config::Config(bool duplicates, int kind, int numberEntries,
+               QString tabDisplayString, QString newlineDisplayString)
+    : duplicates(duplicates)
+    , kind(kind)
+    , numberEntries(numberEntries)
+    , tabDisplayString(std::move(tabDisplayString))
+    , newlineDisplayString(std::move(newlineDisplayString))
+{
+    qDebug() << "Rofi Config constructed with:"
+             << "entries=" << numberEntries
+             << "duplicates=" << duplicates
+             << "kind=" << kind;
 }
 
-QMutex Config::configMutex;
+// Factory method for CLI construction
+const Config& Config::createFromCLI() {
+    // Load default values from file first
+    bool duplicates = false;
+    int kind = -1;
+    int numberEntries = 0;
+    QString tabDisplayString = QStringLiteral("⭾");
+    QString newlineDisplayString = QStringLiteral("⏎");
 
-Config::~Config() {
-    qDebug() << "Rofi Config singleton destroyed";
-}
-
-
-void Config::load(){
-    ensureNotFrozen("load configuration from file");
-    QMutexLocker locker(&configMutex);
-
+    // Load from settings file
     QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
-
-    // Ensure config directory exists and create default config if needed
     ensureConfigDirectory(settings->fileName());
     createDefaultConfig(settings);
 
-    qDebug()<<"loading settings from file "<<settings->fileName();
     numberEntries = loadValue(settings, "entries", numberEntries);
     duplicates = loadValue(settings, "duplicates", duplicates);
     kind = loadValue(settings, "kind", kind);
     tabDisplayString = loadValue(settings, "tab_string", tabDisplayString);
     newlineDisplayString = loadValue(settings, "newline_string", newlineDisplayString);
-    qDebug()<<"loaded settings "<<*this;
-}
 
-void Config::save(){
-    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
-    qDebug()<<"save settings"<< *this <<" to file "<<settings->fileName();
-    saveValue(settings, "entries", numberEntries);
-    saveValue(settings, "duplicates", duplicates);
-    saveValue(settings, "kind", kind);
-    saveValue(settings, "tab_string", tabDisplayString);
-    saveValue(settings, "newline_string", newlineDisplayString);
-
-    qDebug()<<"Saving config to "<<settings->fileName();
-    settings->sync();
-    qDebug()<<"Saved";
-}
-
-void Config::applyArgOverrides() {
-    ensureNotFrozen("apply CLI argument overrides");
-    QMutexLocker locker(&configMutex);
-
-    // Store original values for logging
+    // Apply CLI overrides
     int originalNumberEntries = numberEntries;
     bool originalDuplicates = duplicates;
     int originalKind = kind;
@@ -97,17 +84,22 @@ void Config::applyArgOverrides() {
         }
     };
 
-    // Apply all argument overrides using helper functions
+    // Apply all argument overrides
     applyIntOverride("-qlipmon-max-items", numberEntries, originalNumberEntries);
     applyIntOverride("-qlipmon-kind", kind, originalKind);
     applyBoolOverride("-qlipmon-duplicates", duplicates, originalDuplicates);
     applyStringOverride("-qlipmon-tab-string", tabDisplayString, originalTabString);
     applyStringOverride("-qlipmon-newline-string", newlineDisplayString, originalNewlineString);
 
-    // Configuration is now complete and immutable
-    freeze();
-}
+    // Create and store the immutable config instance
+    configInstance = std::unique_ptr<const Config>(
+        new Config(duplicates, kind, numberEntries,
+                   tabDisplayString, newlineDisplayString)
+    );
 
+    qDebug() << "Rofi Config created from CLI arguments:" << *configInstance;
+    return *configInstance;
+}
 
 QDebug &operator<<(QDebug &out, const Config &c){
     out<<"Config{ number:"<<c.numberEntries<<", duplicates: "<<c.duplicates<<", "
@@ -116,20 +108,29 @@ QDebug &operator<<(QDebug &out, const Config &c){
     return out;
 }
 
-void Config::freeze() {
-    if (!frozen) {
-        frozen = true;
-        qDebug() << "Configuration frozen - now immutable";
+// Const singleton access
+const Config& Config::instance() {
+    if (!configInstance) {
+        qWarning() << "Config not initialized! Call createFromCLI() first.";
+        // Return a default config to prevent crashes
+        static const Config defaultConfig(false, -1, 0, QStringLiteral("⭾"), QStringLiteral("⏎"));
+        return defaultConfig;
     }
+    return *configInstance;
 }
 
-bool Config::isFrozen() const {
-    return frozen;
+// Save current configuration to file
+void Config::save() const {
+    QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
+    qDebug() << "Saving rofi config to" << settings->fileName();
+
+    saveValue(settings, "entries", numberEntries);
+    saveValue(settings, "duplicates", duplicates);
+    saveValue(settings, "kind", kind);
+    saveValue(settings, "tab_string", tabDisplayString);
+    saveValue(settings, "newline_string", newlineDisplayString);
+
+    settings->sync();
+    qDebug() << "Rofi config saved";
 }
 
-void Config::ensureNotFrozen(const QString& operation) const {
-    if (frozen) {
-        qCritical() << "Configuration is frozen - cannot " << operation;
-        throw std::runtime_error(qPrintable("Configuration is immutable after CLI parsing. Cannot " + operation));
-    }
-}

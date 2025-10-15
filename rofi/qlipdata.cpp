@@ -8,8 +8,9 @@ RofiData* QlipData::getEntries(){
     RofiData *ret = new RofiData;
     qDebug()<<"using singleton config";
 
+    const Config& config = Config::instance();
     QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
-    QDBusReply reply = _interface.getTextHistory(Config::instance().kind, Config::instance().duplicates);
+    QDBusReply reply = _interface.getTextHistory(config.kind, config.duplicates);
 
     if(reply.isValid()){
         ret->error = false;
@@ -18,8 +19,8 @@ RofiData* QlipData::getEntries(){
         auto &entries = ret->entries;
 
         qDebug()<<"Got a list with "<<entries.size()<<" elements";
-        if(Config::instance().numberEntries > 0 && entries.size() > Config::instance().numberEntries){
-            entries.erase(entries.begin() + Config::instance().numberEntries, entries.end());
+        if(config.numberEntries > 0 && entries.size() > config.numberEntries){
+            entries.erase(entries.begin() + config.numberEntries, entries.end());
         }
     }else{
         qWarning()<<"Error getting clipboard data: "<<reply.error();
@@ -31,6 +32,7 @@ RofiData* QlipData::getEntries(){
 }
 
 void QlipData::setText(const QString &txt){
+    const Config& config = Config::instance();
     QlipMonInterface _interface(QLIPMON_DBUS_FQDN, QLIPMON_DBUS_PATH, QDBusConnection::sessionBus(), 0);
-    _interface.setText(txt, Config::instance().kind);
+    _interface.setText(txt, config.kind);
 }

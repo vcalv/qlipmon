@@ -4,43 +4,38 @@
 #include <QDebug>
 #include <QMutex>
 #include <QStandardPaths>
+#include <memory>
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {
    public:
-     // Singleton access
-     static Config& instance();
+     // Factory method for CLI construction - only way to create config
+     static const Config& createFromCLI(int argc, char* argv[]);
+
+     // Const singleton access
+     static const Config& instance();
 
      // Delete copy constructor and assignment operator
      Config(const Config&) = delete;
      Config& operator=(const Config&) = delete;
 
-     // Configuration properties (public for backward compatibility)
-     int numberEntries = 500;
-     bool broadcast = true;
-     bool dbus = true;
-     bool useDiskDatabase = false;
-     QString databasePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
+     // Immutable configuration properties
+     const int numberEntries;
+     const bool broadcast;
+     const bool dbus;
+     const bool useDiskDatabase;
+     const QString databasePath;
 
-     // Immutability control
-     void freeze(); // Make configuration immutable after CLI parsing
-     bool isFrozen() const; // Check if configuration is frozen
-     void ensureNotFrozen(const QString& operation) const; // Throw if frozen
-
-    //void load(const QString& path);
-    void load();
-    //void save(const QString& path);
-    void save();
-
-    void loadArgs(const QStringList &args);
-    void loadArgs(int argc, char* argv[]);
-
-    ~Config();
+     //void load(const QString& path);
+     void save() const;
 
   private:
-    Config() = default;
-    bool frozen = false; // Tracks if configuration is immutable
-    static QMutex configMutex; // Protects configuration loading and CLI parsing
+    // Private constructor - only called by factory method
+    Config(int numberEntries, bool broadcast, bool dbus,
+           bool useDiskDatabase, QString databasePath);
+
+    // Static instance storage
+    static std::unique_ptr<const Config> configInstance;
 };
 
 QDebug &operator<<(QDebug &out, const Config &c);
