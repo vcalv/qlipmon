@@ -18,32 +18,32 @@ std::unique_ptr<database> database::databaseInstance;
 static QString staticConnectionName;
 
 static QSqlDatabase __database(){
-     return QSqlDatabase::database();
- }
+    return QSqlDatabase::database();
+}
 
 static bool __transaction(){
-     QSqlDatabase db = __database();
-     if (db.isValid() && db.isOpen()) {
-         return db.transaction();
-     }
-     return false;
- }
+    QSqlDatabase db = __database();
+    if (db.isValid() && db.isOpen()) {
+        return db.transaction();
+    }
+    return false;
+}
 
 static bool __commit(){
-     QSqlDatabase db = __database();
-     if (db.isValid() && db.isOpen()) {
-         return db.commit();
-     }
-     return false;
- }
+    QSqlDatabase db = __database();
+    if (db.isValid() && db.isOpen()) {
+        return db.commit();
+    }
+    return false;
+}
 
 static bool __rollback(){
-     QSqlDatabase db = __database();
-     if (db.isValid() && db.isOpen()) {
-         return db.rollback();
-     }
-     return false;
- }
+    QSqlDatabase db = __database();
+    if (db.isValid() && db.isOpen()) {
+        return db.rollback();
+    }
+    return false;
+}
 
 static database_entry entryFromQuery(QSqlQuery& query){
     database_entry ret;
@@ -74,140 +74,140 @@ static QList<database_entry> entriesFromSQL(const QString &sql){
 }
 
 database::~database(){
-     qDebug()<<"~database";
-     qDebug()<<"Closing database";
-     QSqlDatabase db = QSqlDatabase::database();
+    qDebug()<<"~database";
+    qDebug()<<"Closing database";
+    QSqlDatabase db = QSqlDatabase::database();
 
-     if (db.isValid() && db.isOpen()) {
-         db.close();
+    if (db.isValid() && db.isOpen()) {
+        db.close();
 
-         // Verify database is actually closed
-         if(db.isOpen()){
-             qCritical() << "Database still open after close attempt!";
-             qCritical() << "Database connection name: " << db.connectionName();
-         }
-     }
- }
-
- // Private constructor - only called by factory method
- database::database(int numberEntries, bool useDiskDatabase, const QString& databasePath)
-     : numberEntries(numberEntries)
- {
-
-    qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
-    const QString DRIVER("QSQLITE");
-    QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
-
-    if (useDiskDatabase) {
-        qDebug() << "Using disk database at path:" << databasePath;
-
-        // Always ensure default data directory exists
-        QString defaultDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-        QDir dataDir(defaultDataDir);
-        if (!dataDir.exists()) {
-            if (!dataDir.mkpath(".")) {
-                qCritical() << "Failed to create data directory:" << defaultDataDir;
-                return;
-            }
-            qDebug() << "Created data directory:" << defaultDataDir;
+        // Verify database is actually closed
+        if(db.isOpen()){
+            qCritical() << "Database still open after close attempt!";
+            qCritical() << "Database connection name: " << db.connectionName();
         }
-
-        // For non-default paths, check if directory exists
-        if (databasePath != defaultDataDir + "/qlipmon.db") {
-            QFileInfo fileInfo(databasePath);
-            QDir dir = fileInfo.dir();
-            if (!dir.exists()) {
-                qCritical() << "Database directory does not exist:" << dir.path();
-                qCritical() << "Please create the directory or use the default path";
-                return;
-            }
-        }
-
-        db.setDatabaseName(databasePath);
-    } else {
-        qDebug() << "Using in-memory database";
-        db.setDatabaseName(":memory:");
     }
-
-    if(!db.open()){
-        qCritical() << "Failed to open database: " << db.lastError().text();
-        qCritical() << "Database name: " << databasePath;
-        qCritical() << "Driver: " << DRIVER;
-        return;
-    }
-
-    // Ensure foreign key constraints are enabled
-    QSqlQuery enableFK;
-    if(!enableFK.exec("PRAGMA foreign_keys = ON")){
-        qWarning() << "Failed to enable foreign key constraints: " << enableFK.lastError().text();
-    } else {
-        qDebug() << "Foreign key constraints enabled";
-    }
-
-    // Check if tables already exist
-    QSqlQuery checkTables;
-    if(!checkTables.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'")){
-        qCritical() << "SQL CHECK TABLES ERROR: " << checkTables.lastError().text();
-        return;
-    }
-
-    bool tablesExist = checkTables.next();
-
-    if (!tablesExist) {
-        qDebug() << "Creating database schema...";
-        const QStringList DDLs ={
-              "CREATE TABLE texts ("
-                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                 "text TEXT NOT NULL"
-              ");",
-             "CREATE TABLE pastes ("
-                 "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                 "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
-                 "mode INTEGER NOT NULL,"
-                 "ts INTEGER DEFAULT NULL"
-             ");",
-             "CREATE UNIQUE INDEX idx_texts_text ON texts(text);",
-             "CREATE INDEX idx_pastes_text_id ON pastes(text_id);",
-             "CREATE TRIGGER cleanup_orphaned_texts "
-                 "AFTER DELETE ON pastes "
-                 "BEGIN "
-                     "DELETE FROM texts "
-                     "WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes); "
-                 "END;"
-        };
-
-        for (const QString& DDL: DDLs){
-              QSqlQuery query;
-              if(!query.exec(DDL)){
-                  qCritical() << "SQL CREATE ERROR: " << query.lastError().text();
-                  qCritical() << "Failed DDL: " << DDL;
-                  return;
-              }
-          }
-        qDebug() << "Database schema created successfully";
-    } else {
-        qDebug() << "Database schema already exists, skipping creation";
-    }
-
-    // Clean up orphaned texts on startup
-    qDebug() << "Checking for orphaned text records on startup...";
-    QSqlQuery cleanupQuery;
-    if(cleanupQuery.exec("DELETE FROM texts WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes)")){
-        int cleanedCount = cleanupQuery.numRowsAffected();
-        if(cleanedCount > 0){
-            qInfo() << "Startup cleanup: deleted" << cleanedCount << "orphaned text records";
-        } else {
-            qDebug() << "Startup cleanup: no orphaned text records found";
-        }
-    } else {
-        qWarning() << "Startup cleanup failed:" << cleanupQuery.lastError().text();
-    }
-
-    qDebug() << "Database constructed with:"
-             << "entries=" << numberEntries
-             << "disk_db=" << useDiskDatabase
-             << "db_path=" << databasePath;
 }
+
+    // Private constructor - only called by factory method
+    database::database(int numberEntries, bool useDiskDatabase, const QString& databasePath)
+        : numberEntries(numberEntries)
+    {
+
+        qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
+        const QString DRIVER("QSQLITE");
+        QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
+
+        if (useDiskDatabase) {
+            qDebug() << "Using disk database at path:" << databasePath;
+
+            // Always ensure default data directory exists
+            QString defaultDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+            QDir dataDir(defaultDataDir);
+            if (!dataDir.exists()) {
+                if (!dataDir.mkpath(".")) {
+                    qCritical() << "Failed to create data directory:" << defaultDataDir;
+                    return;
+                }
+                qDebug() << "Created data directory:" << defaultDataDir;
+            }
+
+            // For non-default paths, check if directory exists
+            if (databasePath != defaultDataDir + "/qlipmon.db") {
+                QFileInfo fileInfo(databasePath);
+                QDir dir = fileInfo.dir();
+                if (!dir.exists()) {
+                    qCritical() << "Database directory does not exist:" << dir.path();
+                    qCritical() << "Please create the directory or use the default path";
+                    return;
+                }
+            }
+
+            db.setDatabaseName(databasePath);
+        } else {
+            qDebug() << "Using in-memory database";
+            db.setDatabaseName(":memory:");
+        }
+
+        if(!db.open()){
+            qCritical() << "Failed to open database: " << db.lastError().text();
+            qCritical() << "Database name: " << databasePath;
+            qCritical() << "Driver: " << DRIVER;
+            return;
+        }
+
+        // Ensure foreign key constraints are enabled
+        QSqlQuery enableFK;
+        if(!enableFK.exec("PRAGMA foreign_keys = ON")){
+            qWarning() << "Failed to enable foreign key constraints: " << enableFK.lastError().text();
+        } else {
+            qDebug() << "Foreign key constraints enabled";
+        }
+
+        // Check if tables already exist
+        QSqlQuery checkTables;
+        if(!checkTables.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='texts'")){
+            qCritical() << "SQL CHECK TABLES ERROR: " << checkTables.lastError().text();
+            return;
+        }
+
+        bool tablesExist = checkTables.next();
+
+        if (!tablesExist) {
+            qDebug() << "Creating database schema...";
+            const QStringList DDLs ={
+                "CREATE TABLE texts ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "text TEXT NOT NULL"
+                ");",
+                "CREATE TABLE pastes ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "text_id INTEGER REFERENCES texts(id) ON DELETE CASCADE,"
+                "mode INTEGER NOT NULL,"
+                "ts INTEGER DEFAULT NULL"
+                ");",
+                "CREATE UNIQUE INDEX idx_texts_text ON texts(text);",
+                "CREATE INDEX idx_pastes_text_id ON pastes(text_id);",
+                "CREATE TRIGGER cleanup_orphaned_texts "
+                "AFTER DELETE ON pastes "
+                "BEGIN "
+                "DELETE FROM texts "
+                "WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes); "
+                "END;"
+            };
+
+            for (const QString& DDL: DDLs){
+                QSqlQuery query;
+                if(!query.exec(DDL)){
+                    qCritical() << "SQL CREATE ERROR: " << query.lastError().text();
+                    qCritical() << "Failed DDL: " << DDL;
+                    return;
+                }
+            }
+            qDebug() << "Database schema created successfully";
+        } else {
+            qDebug() << "Database schema already exists, skipping creation";
+        }
+
+        // Clean up orphaned texts on startup
+        qDebug() << "Checking for orphaned text records on startup...";
+        QSqlQuery cleanupQuery;
+        if(cleanupQuery.exec("DELETE FROM texts WHERE id NOT IN (SELECT DISTINCT text_id FROM pastes)")){
+            int cleanedCount = cleanupQuery.numRowsAffected();
+            if(cleanedCount > 0){
+                qInfo() << "Startup cleanup: deleted" << cleanedCount << "orphaned text records";
+            } else {
+                qDebug() << "Startup cleanup: no orphaned text records found";
+            }
+        } else {
+            qWarning() << "Startup cleanup failed:" << cleanupQuery.lastError().text();
+        }
+
+        qDebug() << "Database constructed with:"
+                 << "entries=" << numberEntries
+                 << "disk_db=" << useDiskDatabase
+                 << "db_path=" << databasePath;
+    }
 
 // Factory method for database initialization using Config
 database& database::createFromConfig() {
@@ -223,20 +223,20 @@ database& database::createFromConfig() {
 }
 
 // Singleton access
- database& database::instance() {
-     // In normal usage, createFromConfig() should be called first
-     // If databaseInstance is null, we need to handle this gracefully
-     if (!databaseInstance) {
-         qCritical() << "Database not initialized! This is a programming error.";
-         qCritical() << "Call database::createFromConfig() before using database::instance()";
-         // Force a crash in debug mode to catch this error early
-         Q_ASSERT(databaseInstance != nullptr);
-         // In release mode, provide a safe fallback (though this indicates a bug)
-         static database fallbackDatabase(500, false, ":memory:");
-         return fallbackDatabase;
-     }
-     return *databaseInstance;
- }
+database& database::instance() {
+    // In normal usage, createFromConfig() should be called first
+    // If databaseInstance is null, we need to handle this gracefully
+    if (!databaseInstance) {
+        qCritical() << "Database not initialized! This is a programming error.";
+        qCritical() << "Call database::createFromConfig() before using database::instance()";
+        // Force a crash in debug mode to catch this error early
+        Q_ASSERT(databaseInstance != nullptr);
+        // In release mode, provide a safe fallback (though this indicates a bug)
+        static database fallbackDatabase(500, false, ":memory:");
+        return fallbackDatabase;
+    }
+    return *databaseInstance;
+}
 
 void database::save(QString text, QClipboard::Mode mode){
     qDebug()<<"save("<<text<<", "<<mode<<")";
