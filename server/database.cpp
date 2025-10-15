@@ -1,7 +1,8 @@
 #include "database.h"
 #include "config.h"
 #include <QSqlDatabase>
-#include <QtSql>
+#include <QSqlQuery>
+#include <QSqlError>
 #include <QDateTime>
 #include <QList>
 #include <QClipboard>
@@ -94,7 +95,8 @@ database::~database(){
         : numberEntries(numberEntries)
     {
 
-        qDebug() << "Available QtSQL drivers:" << QSqlDatabase::drivers();
+        QStringList drivers = QSqlDatabase::drivers();
+        qDebug() << "Available QtSQL drivers:" << drivers.join(", ");
         const QString DRIVER("QSQLITE");
         QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
 
@@ -393,10 +395,19 @@ void database::__cleanup(){
 
     // Debug: Check how many pastes and texts we have
     QSqlQuery countQuery;
-    countQuery.exec("SELECT COUNT(*) FROM pastes");
+    countQuery.prepare("SELECT COUNT(*) FROM pastes");
+
+    if(!countQuery.exec()){
+        qWarning() << "SQL COUNT ERROR: " << countQuery.lastError().text();
+        return;
+    }
     int pasteCount = countQuery.next() ? countQuery.value(0).toInt() : 0;
 
-    countQuery.exec("SELECT COUNT(*) FROM texts");
+    countQuery.prepare("SELECT COUNT(*) FROM texts");
+    if(!countQuery.exec()){
+        qWarning() << "SQL COUNT ERROR: " << countQuery.lastError().text();
+        return;
+    }
     int textCount = countQuery.next() ? countQuery.value(0).toInt() : 0;
 
     qDebug()<<"Database state: "<<pasteCount<<" pastes, "<<textCount<<" texts";
