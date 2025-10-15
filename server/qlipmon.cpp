@@ -1,5 +1,6 @@
 #include "qlipmon.h"
 #include "config.h"
+#include "database.h"
 #include "qlipmon_adaptor.h"
 
 #include <QObject>

@@ -1,10 +1,11 @@
 #ifndef QLIPMON_H
 #define QLIPMON_H
 
-#include "database.h"
+// Forward declaration for better IDE support
+class QlipmonAdaptor;
+
 #include "../common/database_entry.h"
 #include "config.h"
-#include "qlipmon_adaptor.h"
 
 #include <QObject>
 #include <QApplication>
