@@ -12,7 +12,7 @@ std::unique_ptr<const Config> Config::configInstance;
 
 // Private constructor
 Config::Config(bool duplicates, int kind, int numberEntries,
-               QString tabDisplayString, QString newlineDisplayString)
+            QString tabDisplayString, QString newlineDisplayString)
     : duplicates(duplicates)
     , kind(kind)
     , numberEntries(numberEntries)
@@ -20,9 +20,9 @@ Config::Config(bool duplicates, int kind, int numberEntries,
     , newlineDisplayString(std::move(newlineDisplayString))
 {
     qDebug() << "Rofi Config constructed with:"
-             << "entries=" << numberEntries
-             << "duplicates=" << duplicates
-             << "kind=" << kind;
+            << "entries=" << numberEntries
+            << "duplicates=" << duplicates
+            << "kind=" << kind;
 }
 
 // Factory method for CLI construction

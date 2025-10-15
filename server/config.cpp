@@ -11,7 +11,7 @@ std::unique_ptr<const Config> Config::configInstance;
 
 // Private constructor
 Config::Config(int numberEntries, bool broadcast, bool dbus,
-               bool useDiskDatabase, QString databasePath)
+            bool useDiskDatabase, QString databasePath)
     : numberEntries(numberEntries)
     , broadcast(broadcast)
     , dbus(dbus)
@@ -19,11 +19,11 @@ Config::Config(int numberEntries, bool broadcast, bool dbus,
     , databasePath(std::move(databasePath))
 {
     qDebug() << "Server Config constructed with:"
-             << "entries=" << numberEntries
-             << "broadcast=" << broadcast
-             << "dbus=" << dbus
-             << "disk_db=" << useDiskDatabase
-             << "db_path=" << databasePath;
+            << "entries=" << numberEntries
+            << "broadcast=" << broadcast
+            << "dbus=" << dbus
+            << "disk_db=" << useDiskDatabase
+            << "db_path=" << databasePath;
 }
 
 // Factory method for CLI construction

@@ -43,8 +43,8 @@ void QlipMon::changed(QClipboard::Mode mode){
 }
 
 QString QlipMon::getLastText(int mode){
-     return database::instance().getLast(QClipboard::Mode(mode));
- }
+    return database::instance().getLast(QClipboard::Mode(mode));
+}
 
 QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
     const auto mode = QClipboard::Mode(_mode);
@@ -61,8 +61,8 @@ QStringList QlipMon::getTextHistory(int _mode, bool duplicates){
 }
 
 QList<database_entry> QlipMon::getHistory(){
-     return database::instance().getUniqueEntries();
- }
+    return database::instance().getUniqueEntries();
+}
 
 void QlipMon::setText(const QString &text, int mode){
     qDebug()<<"setText("<<text<<")";
@@ -77,11 +77,11 @@ void QlipMon::setText(const QString &text, int mode){
 }
 
 void QlipMon::clearHistory(){
-     qDebug()<<"clearHistory()";
-     database::instance().clearHistory();
- }
+    qDebug()<<"clearHistory()";
+    database::instance().clearHistory();
+}
 
 int QlipMon::getEntryCount(){
-     auto entries = database::instance().getUniqueEntries();
-     return entries.count();
- }
+    auto entries = database::instance().getUniqueEntries();
+    return entries.count();
+}
