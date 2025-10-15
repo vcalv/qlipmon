@@ -14,13 +14,13 @@ function process_file(){
 
 cd server
 
-$PROCESSOR -c QlipmonAdaptor -i database_entry.h -a qlipmon_adaptor.h: ../qlipmon.xml
+$PROCESSOR -c QlipmonAdaptor -i ../common/database_entry.h -a qlipmon_adaptor.h: ../qlipmon.xml
 $PROCESSOR -c QlipmonAdaptor -i qlipmon_adaptor.h -a :qlipmon_adaptor.cpp ../qlipmon.xml
 
 process_file qlipmon_adaptor.h;
 
 cd ../rofi
-$PROCESSOR -i ../server/database_entry.h --classname QlipMonInterface -p qlipmon_interface.h: ../qlipmon.xml
+$PROCESSOR -i ../common/database_entry.h --classname QlipMonInterface -p qlipmon_interface.h: ../qlipmon.xml
 $PROCESSOR -i qlipmon_interface.h --classname QlipMonInterface -p :qlipmon_interface.cpp ../qlipmon.xml
 
 process_file qlipmon_interface.h
