@@ -3,8 +3,8 @@
 
 #include <QDebug>
 #include <QMutex>
+#include <QScopedPointer>
 #include <QStandardPaths>
-#include <memory>
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {
@@ -35,7 +35,7 @@ class Config : public CommonConfig {
            bool useDiskDatabase, QString databasePath);
 
     // Static instance storage
-    static std::unique_ptr<const Config> configInstance;
+    static QScopedPointer<const Config> configInstance;
 };
 
 QDebug &operator<<(QDebug &out, const Config &c);

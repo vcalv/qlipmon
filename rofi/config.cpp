@@ -8,7 +8,7 @@ extern "C" {
 }
 
 // Static instance storage
-std::unique_ptr<const Config> Config::configInstance;
+QScopedPointer<const Config> Config::configInstance;
 
 // Private constructor
 Config::Config(bool duplicates, int kind, int numberEntries,
@@ -91,11 +91,13 @@ const Config& Config::createFromCLI() {
     applyStringOverride("-qlipmon-tab-string", tabDisplayString, originalTabString);
     applyStringOverride("-qlipmon-newline-string", newlineDisplayString, originalNewlineString);
 
-    // Create and store the immutable config instance
-    configInstance = std::unique_ptr<const Config>(
-        new Config(duplicates, kind, numberEntries,
-                   tabDisplayString, newlineDisplayString)
-    );
+    // Create and store the immutable config instance using reset
+    if (!configInstance) {
+        configInstance.reset(
+            new Config(duplicates, kind, numberEntries,
+                       tabDisplayString, newlineDisplayString)
+        );
+    }
 
     qDebug() << "Rofi Config created from CLI arguments:" << *configInstance;
     return *configInstance;
@@ -111,10 +113,7 @@ QDebug &operator<<(QDebug &out, const Config &c){
 // Const singleton access
 const Config& Config::instance() {
     if (!configInstance) {
-        qWarning() << "Config not initialized! Call createFromCLI() first.";
-        // Return a default config to prevent crashes
-        static const Config defaultConfig(false, -1, 0, QStringLiteral("⭾"), QStringLiteral("⏎"));
-        return defaultConfig;
+        qFatal("Config not initialized! Call createFromCLI() first.");
     }
     return *configInstance;
 }

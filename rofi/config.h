@@ -3,7 +3,7 @@
 
 #include <QDebug>
 #include <QMutex>
-#include <memory>
+#include <QScopedPointer>
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {
@@ -36,7 +36,7 @@ class Config : public CommonConfig {
              QString tabDisplayString, QString newlineDisplayString);
 
       // Static instance storage
-     static std::unique_ptr<const Config> configInstance;
+     static QScopedPointer<const Config> configInstance;
  };
 
 QDebug &operator<<(QDebug &out, const Config &c);

@@ -7,7 +7,7 @@
 #include <QFile>
 
 // Static instance storage
-std::unique_ptr<const Config> Config::configInstance;
+QScopedPointer<const Config> Config::configInstance;
 
 // Private constructor
 Config::Config(int numberEntries, bool broadcast, bool dbus,
@@ -119,10 +119,12 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
         qDebug() << "CLI values saved to config file";
     }
 
-    // Create and store the immutable config instance
-    configInstance = std::unique_ptr<const Config>(
-        new Config(numberEntries, broadcast, dbus, useDiskDatabase, databasePath)
-    );
+    // Create and store the immutable config instance using reset
+    if (!configInstance) {
+        configInstance.reset(
+            new Config(numberEntries, broadcast, dbus, useDiskDatabase, databasePath)
+        );
+    }
 
     qDebug() << "Server Config created from CLI arguments:" << *configInstance;
     return *configInstance;
@@ -136,11 +138,7 @@ QDebug &operator<<(QDebug &out, const Config &c){
 // Const singleton access
 const Config& Config::instance() {
     if (!configInstance) {
-        qWarning() << "Config not initialized! Call createFromCLI() first.";
-        // Return a default config to prevent crashes
-        static const Config defaultConfig(500, true, true, false,
-            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db");
-        return defaultConfig;
+        qFatal("Config not initialized! Call createFromCLI() first.");
     }
     return *configInstance;
 }
