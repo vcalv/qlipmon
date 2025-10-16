@@ -13,11 +13,9 @@ public:
         QApplication(argc, argv),
         qlipmon(nullptr)
     {
-
         setApplicationName(APP_NAME);
         setApplicationVersion(APP_VERSION);
 
-        Config::createFromCLI(argc, argv);
         qlipmon = new QlipMon();
 
         qInfo()<<"Application name: " << applicationName();
@@ -32,6 +30,7 @@ public:
 
 int main(int argc, char *argv[])
 {
+    Config::createFromCLI(argc, argv);
     Application app(argc, argv);
     return app.exec();
 }
