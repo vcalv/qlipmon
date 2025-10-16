@@ -21,8 +21,7 @@ class QlipMon : public QObject
     Q_PROPERTY(bool broadcast MEMBER _broadcast)
 
 public:
-    //explicit QlipMon(QObject *parent = nullptr);
-    explicit QlipMon(const Config& config, QObject *parent = nullptr);
+    explicit QlipMon(QObject *parent = nullptr);
 
 public slots:
     void setText(const QString &text, int mode=0);

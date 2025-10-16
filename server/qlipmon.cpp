@@ -8,27 +8,32 @@
 
 #include <QGuiApplication>
 #include <QString>
-#include <QSettings>
 #include <QtDBus/QDBusConnection>
 
-QlipMon::QlipMon(const Config& config, QObject *parent): QObject(parent){
+QlipMon::QlipMon(QObject *parent)
+    : QObject(parent)
+{
+    // Get configuration from singleton
+    const Config& config = Config::instance();
+
     // Initialize the database singleton using the config
     database::createFromConfig();
-        clip = QGuiApplication::clipboard();
-        QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
+    clip = QGuiApplication::clipboard();
+    QObject::connect(clip, &QClipboard::changed, this, &QlipMon::changed);
 
-        if(config.dbus){
-            dbusAdaptor = new QlipmonAdaptor(this);
-            QDBusConnection connection = QDBusConnection::sessionBus();
-            connection.registerObject(QLIPMON_DBUS_PATH, this);
-            connection.registerService(QLIPMON_DBUS_FQDN);
-        }else{
-            qWarning()<<"No DBUS interface. Why even run this?";
-            dbusAdaptor = nullptr;
-        }
+    if(config.dbus){
+        dbusAdaptor = new QlipmonAdaptor(this);
+        QDBusConnection connection = QDBusConnection::sessionBus();
+        connection.registerObject(QLIPMON_DBUS_PATH, this);
+        connection.registerService(QLIPMON_DBUS_FQDN);
+    }else{
+        qWarning()<<"No DBUS interface. Why even run this?";
+        dbusAdaptor = nullptr;
+    }
 
-        setProperty("broadcast", config.broadcast);
+    setProperty("broadcast", config.broadcast);
 }
+
 
 void QlipMon::changed(QClipboard::Mode mode){
     QString text = clip->text(mode);
