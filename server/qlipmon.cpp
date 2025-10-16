@@ -25,7 +25,12 @@ QlipMon::QlipMon(QObject *parent)
         dbusAdaptor = new QlipmonAdaptor(this);
         QDBusConnection connection = QDBusConnection::sessionBus();
         connection.registerObject(QLIPMON_DBUS_PATH, this);
-        connection.registerService(QLIPMON_DBUS_FQDN);
+
+        if (!connection.registerService(QLIPMON_DBUS_FQDN)) {
+            qFatal("Failed to register D-Bus service '%s'. Another instance may already be running.", QLIPMON_DBUS_FQDN);
+        }
+
+        qInfo() << "D-Bus service registered successfully:" << QLIPMON_DBUS_FQDN;
     }else{
         qWarning()<<"No DBUS interface. Why even run this?";
         dbusAdaptor = nullptr;
