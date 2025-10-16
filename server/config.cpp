@@ -4,7 +4,6 @@
 #include <QStandardPaths>
 #include <QFileInfo>
 #include <QDir>
-#include <QFile>
 
 // Static instance storage
 QScopedPointer<const Config> Config::configInstance;
@@ -46,7 +45,10 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     broadcast = loadValue(settings, "broadcast", broadcast);
     dbus = loadValue(settings, "dbus", dbus);
     useDiskDatabase = loadValue(settings, "use_disk_database", useDiskDatabase);
-    databasePath = loadValue(settings, "database_path", databasePath);
+    QString loadedDatabasePath = loadValue(settings, "database_path", databasePath);
+    if (loadedDatabasePath != databasePath) {
+        databasePath = loadedDatabasePath;
+    }
 
     // Parse CLI arguments
     QCommandLineParser parser;
@@ -101,11 +103,25 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     if (parser.isSet(diskDatabaseOption))
         useDiskDatabase = parser.value(diskDatabaseOption).toLower() == "true";
 
-    if (parser.isSet(databasePathOption))
+    if (parser.isSet(databasePathOption)) {
         databasePath = parser.value(databasePathOption);
+    }
 
     numberEntries = _history_number;
     qDebug()<<"Parsed CLI arguments: entries=" << numberEntries;
+
+    // Ensure database directory exists if using disk database AND using default path
+    if (useDiskDatabase) {
+        QString defaultDbPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
+        if (databasePath == defaultDbPath) {
+            QFileInfo dbFileInfo(databasePath);
+            QDir dbDir = dbFileInfo.dir();
+            if (!dbDir.exists()) {
+                dbDir.mkpath(".");
+                qDebug() << "Created database directory:" << dbDir.path();
+            }
+        }
+    }
 
     if (parser.isSet(saveOption)) {
         // Save current parsed values to file
@@ -155,12 +171,5 @@ void Config::save() const {
     saveValue(settings, "database_path", databasePath);
 
     settings->sync();
-
-    // Verify file was created
-    if (QFile::exists(settings->fileName())) {
-        qDebug()<<"Config file created successfully:" << settings->fileName();
-    } else {
-        qWarning()<<"Failed to create config file:" << settings->fileName();
-    }
 }
 
