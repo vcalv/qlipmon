@@ -9,10 +9,8 @@
 
 #include "../common/database_entry.h"
 
-class database
-{
-public:
-
+class database {
+  public:
     // Factory method for database initialization - only way to create database
     static database& createFromConfig();
 
@@ -33,7 +31,7 @@ public:
     void clearHistory();
     void save(QString text, QClipboard::Mode mode);
 
-private:
+  private:
     // Private constructor - only called by factory method
     database(int numberEntries, bool useDiskDatabase, const QString& databasePath);
 
@@ -42,7 +40,6 @@ private:
 
     int numberEntries;
     void __cleanup();
-
 };
 
 #endif // DATABASE_H

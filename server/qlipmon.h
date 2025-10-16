@@ -14,36 +14,32 @@ class QlipmonAdaptor;
 #include <QStringList>
 #include <QtDBus/QtDBus>
 
-class QlipMon : public QObject
-{
+class QlipMon : public QObject {
     Q_OBJECT
-    //Q_CLASSINFO("D-Bus Interface", QLIPMON_DBUS_FQDN)
+    // Q_CLASSINFO("D-Bus Interface", QLIPMON_DBUS_FQDN)
     Q_PROPERTY(bool broadcast MEMBER _broadcast)
 
-public:
-    explicit QlipMon(QObject *parent = nullptr);
+  public:
+    explicit QlipMon(QObject* parent = nullptr);
 
-public slots:
-    void setText(const QString &text, int mode=0);
-    QString getLastText(int mode=0);
-    QStringList getTextHistory(int mode=-1, bool duplicates=false);
+  public slots:
+    void setText(const QString& text, int mode = 0);
+    QString getLastText(int mode = 0);
+    QStringList getTextHistory(int mode = -1, bool duplicates = false);
     QList<database_entry> getHistory();
     void clearHistory();
     int getEntryCount();
 
-
-signals:
+  signals:
     void updated(QString text, int mode);
 
-private:
+  private:
     QClipboard* clip;
     bool _broadcast;
     QlipmonAdaptor* dbusAdaptor = nullptr;
 
-private slots:
+  private slots:
     void changed(QClipboard::Mode mode);
-
 };
-
 
 #endif // QLIPMON_H

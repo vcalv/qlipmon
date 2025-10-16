@@ -1,6 +1,3 @@
 #include "dbus.h"
 
-Dbus::Dbus()
-{
-
-}
+Dbus::Dbus() {}

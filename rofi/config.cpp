@@ -11,18 +11,13 @@ extern "C" {
 QScopedPointer<const Config> Config::configInstance;
 
 // Private constructor
-Config::Config(bool duplicates, int kind, int numberEntries,
-            QString tabDisplayString, QString newlineDisplayString)
-    : duplicates(duplicates)
-    , kind(kind)
-    , numberEntries(numberEntries)
-    , tabDisplayString(std::move(tabDisplayString))
-    , newlineDisplayString(std::move(newlineDisplayString))
-{
+Config::Config(bool duplicates, int kind, int numberEntries, QString tabDisplayString,
+               QString newlineDisplayString)
+    : duplicates(duplicates), kind(kind), numberEntries(numberEntries),
+      tabDisplayString(std::move(tabDisplayString)),
+      newlineDisplayString(std::move(newlineDisplayString)) {
     qDebug() << "Rofi Config constructed with:"
-            << "entries=" << numberEntries
-            << "duplicates=" << duplicates
-            << "kind=" << kind;
+             << "entries=" << numberEntries << "duplicates=" << duplicates << "kind=" << kind;
 }
 
 // Factory method for CLI construction
@@ -58,19 +53,21 @@ const Config& Config::createFromCLI() {
         if (find_arg_int(argName, &value)) {
             target = value;
             if (target != original) {
-                qInfo() << "Command line override:" << argName << "=" << target << "(was" << original << ")";
+                qInfo() << "Command line override:" << argName << "=" << target << "(was"
+                        << original << ")";
             }
         }
     };
 
     // Helper function to apply string argument override with logging
     auto applyStringOverride = [&](const char* argName, QString& target, const QString& original) {
-        char *value = nullptr;
+        char* value = nullptr;
         if (find_arg_str(argName, &value)) {
             target = QString(value);
             g_free(value);
             if (target != original) {
-                qInfo() << "Command line override:" << argName << "='" << target << "'(was'" << original << "')";
+                qInfo() << "Command line override:" << argName << "='" << target << "'(was'"
+                        << original << "')";
             }
         }
     };
@@ -94,19 +91,17 @@ const Config& Config::createFromCLI() {
     // Create and store the immutable config instance using reset
     if (!configInstance) {
         configInstance.reset(
-            new Config(duplicates, kind, numberEntries,
-                       tabDisplayString, newlineDisplayString)
-        );
+            new Config(duplicates, kind, numberEntries, tabDisplayString, newlineDisplayString));
     }
 
     qDebug() << "Rofi Config created from CLI arguments:" << *configInstance;
     return *configInstance;
 }
 
-QDebug &operator<<(QDebug &out, const Config &c){
-    out<<"Config{ number:"<<c.numberEntries<<", duplicates: "<<c.duplicates<<", "
-       <<" kind: "<<c.kind<<", tab_string: "<<c.tabDisplayString
-       <<", newline_string: "<<c.newlineDisplayString<<"}";
+QDebug& operator<<(QDebug& out, const Config& c) {
+    out << "Config{ number:" << c.numberEntries << ", duplicates: " << c.duplicates << ", "
+        << " kind: " << c.kind << ", tab_string: " << c.tabDisplayString
+        << ", newline_string: " << c.newlineDisplayString << "}";
     return out;
 }
 
@@ -132,4 +127,3 @@ void Config::save() const {
     settings->sync();
     qDebug() << "Rofi config saved";
 }
-

@@ -4,32 +4,28 @@
 #include <QCommandLineParser>
 #include <QtDebug>
 
-class Application: public QApplication {
-private:
-    QlipMon *qlipmon;
+class Application : public QApplication {
+  private:
+    QlipMon* qlipmon;
 
-public:
-    Application(int argc, char* argv[]):
-        QApplication(argc, argv),
-        qlipmon(nullptr)
-    {
+  public:
+    Application(int argc, char* argv[]) : QApplication(argc, argv), qlipmon(nullptr) {
         setApplicationName(APP_NAME);
         setApplicationVersion(APP_VERSION);
 
         qlipmon = new QlipMon();
 
-        qInfo()<<"Application name: " << applicationName();
-        qInfo()<<"Application version: " << applicationVersion();
+        qInfo() << "Application name: " << applicationName();
+        qInfo() << "Application version: " << applicationVersion();
     }
 
-    ~Application(){
+    ~Application() {
         if (qlipmon != nullptr)
             delete qlipmon;
     }
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     Config::createFromCLI(argc, argv);
     Application app(argc, argv);
     return app.exec();

@@ -3,26 +3,25 @@
 
 #include <QStringList>
 
-extern "C"{
+extern "C" {
 #include <rofi/mode.h>
 }
 
 #include "qlipmon_interface.h"
 #include "config.h"
 
-class RofiData{
-public:
+class RofiData {
+  public:
     QStringList entries;
     bool error;
     QString errorString;
     // Config is now accessed via singleton pattern - no need to store pointer
 };
 
-class QlipData
-{
-public:
+class QlipData {
+  public:
     static RofiData* getEntries();
-    static void setText(const QString &txt);
+    static void setText(const QString& txt);
 };
 
 #endif // QLIPDATA_H

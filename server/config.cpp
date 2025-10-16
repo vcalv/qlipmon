@@ -9,20 +9,13 @@
 QScopedPointer<const Config> Config::configInstance;
 
 // Private constructor
-Config::Config(int numberEntries, bool broadcast, bool dbus,
-            bool useDiskDatabase, QString databasePath)
-    : numberEntries(numberEntries)
-    , broadcast(broadcast)
-    , dbus(dbus)
-    , useDiskDatabase(useDiskDatabase)
-    , databasePath(std::move(databasePath))
-{
+Config::Config(int numberEntries, bool broadcast, bool dbus, bool useDiskDatabase,
+               QString databasePath)
+    : numberEntries(numberEntries), broadcast(broadcast), dbus(dbus),
+      useDiskDatabase(useDiskDatabase), databasePath(std::move(databasePath)) {
     qDebug() << "Server Config constructed with:"
-            << "entries=" << numberEntries
-            << "broadcast=" << broadcast
-            << "dbus=" << dbus
-            << "disk_db=" << useDiskDatabase
-            << "db_path=" << databasePath;
+             << "entries=" << numberEntries << "broadcast=" << broadcast << "dbus=" << dbus
+             << "disk_db=" << useDiskDatabase << "db_path=" << databasePath;
 }
 
 // Factory method for CLI construction
@@ -34,7 +27,8 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     bool broadcast = true;
     bool dbus = true;
     bool useDiskDatabase = false;
-    QString databasePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
+    QString databasePath =
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
 
     // Load from settings file
     QSettings* settings = CommonConfig::getSettings("qlipmon", "server");
@@ -57,7 +51,9 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     parser.addVersionOption();
 
     QCommandLineOption historyNumberOption(QStringList() << "n" << "limit-history");
-    historyNumberOption.setDescription(QString("maximum number of elements saved (0 is no history, negative is infinite, default is ")+QString::number(numberEntries)+").");
+    historyNumberOption.setDescription(QString("maximum number of elements saved (0 is no history, "
+                                               "negative is infinite, default is ") +
+                                       QString::number(numberEntries) + ").");
     historyNumberOption.setValueName("number of elements");
     historyNumberOption.setDefaultValue(QString::number(numberEntries));
     parser.addOption(historyNumberOption);
@@ -83,7 +79,8 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     QCommandLineOption databasePathOption(QStringList() << "database-path");
     databasePathOption.setDescription("database file path (when using disk database)");
     databasePathOption.setValueName("path");
-    databasePathOption.setDefaultValue(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db");
+    databasePathOption.setDefaultValue(
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db");
     parser.addOption(databasePathOption);
 
     QCommandLineOption saveOption(QStringList() << "s" << "save config");
@@ -108,11 +105,12 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     }
 
     numberEntries = _history_number;
-    qDebug()<<"Parsed CLI arguments: entries=" << numberEntries;
+    qDebug() << "Parsed CLI arguments: entries=" << numberEntries;
 
     // Ensure database directory exists if using disk database AND using default path
     if (useDiskDatabase) {
-        QString defaultDbPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
+        QString defaultDbPath =
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/qlipmon.db";
         if (databasePath == defaultDbPath) {
             QFileInfo dbFileInfo(databasePath);
             QDir dbDir = dbFileInfo.dir();
@@ -138,16 +136,17 @@ const Config& Config::createFromCLI(int argc, char* argv[]) {
     // Create and store the immutable config instance using reset
     if (!configInstance) {
         configInstance.reset(
-            new Config(numberEntries, broadcast, dbus, useDiskDatabase, databasePath)
-        );
+            new Config(numberEntries, broadcast, dbus, useDiskDatabase, databasePath));
     }
 
     qDebug() << "Server Config created from CLI arguments:" << *configInstance;
     return *configInstance;
 }
 
-QDebug &operator<<(QDebug &out, const Config &c){
-    out<<"Config{ entries:"<<c.numberEntries<<", broadcast: "<<c.broadcast<<", "<<" dbus: "<<c.dbus<<", disk_db: "<<c.useDiskDatabase<<", db_path: "<<c.databasePath<<"}";
+QDebug& operator<<(QDebug& out, const Config& c) {
+    out << "Config{ entries:" << c.numberEntries << ", broadcast: " << c.broadcast << ", "
+        << " dbus: " << c.dbus << ", disk_db: " << c.useDiskDatabase
+        << ", db_path: " << c.databasePath << "}";
     return out;
 }
 
@@ -172,4 +171,3 @@ void Config::save() const {
 
     settings->sync();
 }
-

@@ -1,0 +1,6 @@
+SortIncludes: Never
+PointerAlignment: Left
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100

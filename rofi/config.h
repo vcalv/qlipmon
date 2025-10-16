@@ -7,38 +7,38 @@
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {
-    public:
-      // Factory method for CLI construction - only way to create config
-      static const Config& createFromCLI();
+  public:
+    // Factory method for CLI construction - only way to create config
+    static const Config& createFromCLI();
 
-      // Const singleton access
-      static const Config& instance();
+    // Const singleton access
+    static const Config& instance();
 
-      // Delete copy constructor and assignment operator
-      Config(const Config&) = delete;
-      Config& operator=(const Config&) = delete;
+    // Delete copy constructor and assignment operator
+    Config(const Config&) = delete;
+    Config& operator=(const Config&) = delete;
 
-      // Immutable configuration properties
-      const bool duplicates;
-      const int kind; // -1 => all;
-      const int numberEntries; // infinite
+    // Immutable configuration properties
+    const bool duplicates;
+    const int kind;          // -1 => all;
+    const int numberEntries; // infinite
 
-      // Configurable display strings for common control characters
-      const QString tabDisplayString;
-      const QString newlineDisplayString;
+    // Configurable display strings for common control characters
+    const QString tabDisplayString;
+    const QString newlineDisplayString;
 
-      //void load(const QString& path);
-      void save() const;
+    // void load(const QString& path);
+    void save() const;
 
-    private:
-      // Private constructor - only called by factory method
-      Config(bool duplicates, int kind, int numberEntries,
-             QString tabDisplayString, QString newlineDisplayString);
+  private:
+    // Private constructor - only called by factory method
+    Config(bool duplicates, int kind, int numberEntries, QString tabDisplayString,
+           QString newlineDisplayString);
 
-      // Static instance storage
-     static QScopedPointer<const Config> configInstance;
- };
+    // Static instance storage
+    static QScopedPointer<const Config> configInstance;
+};
 
-QDebug &operator<<(QDebug &out, const Config &c);
+QDebug& operator<<(QDebug& out, const Config& c);
 
 #endif // CONFIG_H

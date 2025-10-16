@@ -2,23 +2,22 @@
 #include <QtDBus>
 #include <QDebug>
 
-
 /// Initializer
 class Init {
-public:
+  public:
     Init() {
-        qDebug()<<"Registering types";
+        qDebug() << "Registering types";
         qRegisterMetaType<database_entry>("database_entry");
         qDBusRegisterMetaType<database_entry>();
 
         qRegisterMetaType<QList<database_entry>>("list_database_entry");
         qDBusRegisterMetaType<QList<database_entry>>();
-        qDebug()<<"Types registered";
+        qDebug() << "Types registered";
     }
 };
 static Init _initTypes;
 
-QDBusArgument &operator<<(QDBusArgument &argument, const database_entry &e ){
+QDBusArgument& operator<<(QDBusArgument& argument, const database_entry& e) {
     argument.beginStructure();
     argument << e.id;
     argument << e.text;
@@ -28,8 +27,7 @@ QDBusArgument &operator<<(QDBusArgument &argument, const database_entry &e ){
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, database_entry &e )
-{
+const QDBusArgument& operator>>(const QDBusArgument& argument, database_entry& e) {
     qint64 when;
     int mode;
 
@@ -45,7 +43,8 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, database_entry &e
     return argument;
 }
 
-QDebug &operator<<(QDebug &out, const database_entry &e){
-    out<<"database::entry{ id:"<<e.id<<", text: "<<e.text<<", "<<" mode: "<<e.mode<<", when: "<<e.when<<"}";
+QDebug& operator<<(QDebug& out, const database_entry& e) {
+    out << "database::entry{ id:" << e.id << ", text: " << e.text << ", " << " mode: " << e.mode
+        << ", when: " << e.when << "}";
     return out;
 }

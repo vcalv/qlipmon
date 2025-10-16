@@ -3,9 +3,8 @@
 
 #include <QObject>
 
-class Dbus
-{
-public:
+class Dbus {
+  public:
     Dbus();
 };
 

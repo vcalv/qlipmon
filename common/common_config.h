@@ -13,9 +13,8 @@
  * Provides common functionality for loading and saving configuration
  * settings using QSettings with INI format.
  */
-class CommonConfig
-{
-public:
+class CommonConfig {
+  public:
     /**
      * @brief Get or create QSettings instance for this configuration
      * @param organization The organization name for QSettings
@@ -25,7 +24,8 @@ public:
     static QSettings* getSettings(const QString& organization, const QString& application) {
         static QSettings* settings = nullptr;
         if (!settings) {
-            settings = new QSettings(QSettings::Format::IniFormat, QSettings::Scope::UserScope, organization, application);
+            settings = new QSettings(QSettings::Format::IniFormat, QSettings::Scope::UserScope,
+                                     organization, application);
             qDebug() << "Config file path:" << settings->fileName();
         }
         return settings;
@@ -61,7 +61,7 @@ public:
      * @param key Configuration key
      * @param value Configuration value
      */
-    template<typename T>
+    template <typename T>
     static void saveValue(QSettings* settings, const QString& key, const T& value) {
         ensureConfigDirectory(settings->fileName());
         settings->setValue(key, value);
@@ -74,7 +74,7 @@ public:
      * @param defaultValue Default value if key doesn't exist
      * @return Loaded or default value
      */
-    template<typename T>
+    template <typename T>
     static T loadValue(QSettings* settings, const QString& key, const T& defaultValue) {
         return settings->value(key, defaultValue).template value<T>();
     }

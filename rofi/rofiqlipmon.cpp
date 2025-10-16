@@ -60,15 +60,14 @@ static QString sanitizeForDisplay(const QString& input) {
     return sanitized;
 }
 
-RofiData* RofiDataFromMode(const Mode *mode){
-    return reinterpret_cast<RofiData*> (mode_get_private_data(mode));
+RofiData* RofiDataFromMode(const Mode* mode) {
+    return reinterpret_cast<RofiData*>(mode_get_private_data(mode));
 }
 
-static char* QStringDupa(const QString& line){
-      QByteArray ba = line.toLocal8Bit();
-      return g_strdup(ba.data());
+static char* QStringDupa(const QString& line) {
+    QByteArray ba = line.toLocal8Bit();
+    return g_strdup(ba.data());
 }
-
 
 /**
  * @param mode The mode to initialize
@@ -77,15 +76,15 @@ static char* QStringDupa(const QString& line){
  *
  * @returns FALSE if there was a failure, TRUE if successful
  */
-static int qlipmon_mode_init(Mode *sw) {
-  if (mode_get_private_data(sw) == nullptr) {
-    // Create config from CLI once during plugin initialization
-    Config::createFromCLI();
+static int qlipmon_mode_init(Mode* sw) {
+    if (mode_get_private_data(sw) == nullptr) {
+        // Create config from CLI once during plugin initialization
+        Config::createFromCLI();
 
-    RofiData *data = QlipData::getEntries();
-    mode_set_private_data(sw, reinterpret_cast<void *>(data));
-  }
-  return TRUE;
+        RofiData* data = QlipData::getEntries();
+        mode_set_private_data(sw, reinterpret_cast<void*>(data));
+    }
+    return TRUE;
 }
 
 /**
@@ -95,13 +94,13 @@ static int qlipmon_mode_init(Mode *sw) {
  *
  * @returns an unsigned in with the number of entries.
  */
-static unsigned int qlipmon_mode_get_num_entries(const Mode *sw) {
-  RofiData* data = RofiDataFromMode(sw);
-  if (data->error){
-      return 0;
-  }else{
-    return data->entries.size();
-  }
+static unsigned int qlipmon_mode_get_num_entries(const Mode* sw) {
+    RofiData* data = RofiDataFromMode(sw);
+    if (data->error) {
+        return 0;
+    } else {
+        return data->entries.size();
+    }
 }
 
 /**
@@ -114,29 +113,23 @@ static unsigned int qlipmon_mode_get_num_entries(const Mode *sw) {
  *
  * @returns the next #ModeMode.
  */
-static ModeMode qlipmon_mode_result(
-        Mode *sw,
-        int mretv,
-        char **input,
-        unsigned int selected_line
-        ) {
+static ModeMode qlipmon_mode_result(Mode* sw, int mretv, char** input, unsigned int selected_line) {
     ModeMode retv = MODE_EXIT;
-    Q_UNUSED( sw )
-    Q_UNUSED( input )
+    Q_UNUSED(sw)
+    Q_UNUSED(input)
 
     RofiData* data = RofiDataFromMode(sw);
-
 
     if (mretv & MENU_NEXT) {
         retv = NEXT_DIALOG;
     } else if (mretv & MENU_PREVIOUS) {
         retv = PREVIOUS_DIALOG;
     } else if (mretv & MENU_QUICK_SWITCH) {
-        retv = (ModeMode) (mretv & MENU_LOWER_MASK);
-    } else if ((mretv & MENU_OK) ) {
-        if(!data->error){
+        retv = (ModeMode)(mretv & MENU_LOWER_MASK);
+    } else if ((mretv & MENU_OK)) {
+        if (!data->error) {
             const QString selected = data->entries.value(selected_line);
-            qDebug()<<"Selected = " << selected;
+            qDebug() << "Selected = " << selected;
             QlipData::setText(selected);
         }
         retv = MODE_EXIT;
@@ -151,11 +144,11 @@ static ModeMode qlipmon_mode_result(
  *
  * Destroy the mode
  */
-static void qlipmon_mode_destroy(Mode *sw) {
-  RofiData* data = RofiDataFromMode(sw);
-  if (data != nullptr) {
-      delete data;          // Delete the RofiData container (Config is now singleton)
-  }
+static void qlipmon_mode_destroy(Mode* sw) {
+    RofiData* data = RofiDataFromMode(sw);
+    if (data != nullptr) {
+        delete data; // Delete the RofiData container (Config is now singleton)
+    }
 }
 
 /**
@@ -166,18 +159,18 @@ static void qlipmon_mode_destroy(Mode *sw) {
  * @return a new allocated (valid pango markup) message to display (user should
  * free).
  */
-static char *qlipmon_get_message(const Mode *sw) {
-  RofiData* data = RofiDataFromMode(sw);
-  if(data->error){
-      QString line = QString("<b>QlipMon <i>Error:</i> </b>");
-      line += QString("<i>") + data->errorString + QString("</i>");
-      return QStringDupa(line);
-  }else if( 0 == data->entries.size() ){
-      QString line = QString("<b>QlipMon:</b> <i>No clipboard history!</i>");
-      return QStringDupa(line);
-  }else{
-      return NULL;
-  }
+static char* qlipmon_get_message(const Mode* sw) {
+    RofiData* data = RofiDataFromMode(sw);
+    if (data->error) {
+        QString line = QString("<b>QlipMon <i>Error:</i> </b>");
+        line += QString("<i>") + data->errorString + QString("</i>");
+        return QStringDupa(line);
+    } else if (0 == data->entries.size()) {
+        QString line = QString("<b>QlipMon:</b> <i>No clipboard history!</i>");
+        return QStringDupa(line);
+    } else {
+        return NULL;
+    }
 }
 
 /**
@@ -187,47 +180,42 @@ static char *qlipmon_get_message(const Mode *sw) {
  * @param attribute_list List of extra (pango) attribute to apply when displaying. [out][null]
  * @param get_entry If the should be returned.
  *
- * Returns the string as it should be displayed for the entry and the state of how it should be displayed.
+ * Returns the string as it should be displayed for the entry and the state of how it should be
+ * displayed.
  *
  * @returns allocated new string and state when get_entry is TRUE otherwise just the state.
  */
-static char *get_display_value(
-  const Mode *sw,
-  unsigned int selected_line,
-  int *state,
-  GList **attr_list,
-  int get_entry
-) {
-  Q_UNUSED( get_entry )
-  Q_UNUSED( state )
-  Q_UNUSED( attr_list )
-  RofiData* data = RofiDataFromMode(sw);
+static char* get_display_value(const Mode* sw, unsigned int selected_line, int* state,
+                               GList** attr_list, int get_entry) {
+    Q_UNUSED(get_entry)
+    Q_UNUSED(state)
+    Q_UNUSED(attr_list)
+    RofiData* data = RofiDataFromMode(sw);
 
-  // Rofi is not yet exporting these constants in their headers
-  // *state |= MARKUP;
-  // https://github.com/DaveDavenport/rofi/blob/79adae77d72be3de96d1c4e6d53b6bae4cb7e00e/include/widgets/textbox.h#L104
-  //*state |= 8;
+    // Rofi is not yet exporting these constants in their headers
+    // *state |= MARKUP;
+    // https://github.com/DaveDavenport/rofi/blob/79adae77d72be3de96d1c4e6d53b6bae4cb7e00e/include/widgets/textbox.h#L104
+    //*state |= 8;
 
-  // Enhanced error handling and edge case management
-  if(data->error){
-      return NULL;
-  }
+    // Enhanced error handling and edge case management
+    if (data->error) {
+        return NULL;
+    }
 
-  // Bounds checking: ensure selected_line is within valid range
-  if(selected_line >= static_cast<unsigned int>(data->entries.size())) {
-      QString errorMsg = QStringLiteral("<Invalid entry index>");
-      return QStringDupa(errorMsg);
-  }
+    // Bounds checking: ensure selected_line is within valid range
+    if (selected_line >= static_cast<unsigned int>(data->entries.size())) {
+        QString errorMsg = QStringLiteral("<Invalid entry index>");
+        return QStringDupa(errorMsg);
+    }
 
-  // Main processing with improved character sanitization
-  QString line = data->entries.value(selected_line);
+    // Main processing with improved character sanitization
+    QString line = data->entries.value(selected_line);
 
-  // Apply comprehensive character replacements for better display
-  // This replaces the original two replace() calls with a single, more efficient function
-  QString sanitizedLine = sanitizeForDisplay(line);
+    // Apply comprehensive character replacements for better display
+    // This replaces the original two replace() calls with a single, more efficient function
+    QString sanitizedLine = sanitizeForDisplay(line);
 
-  return QStringDupa(sanitizedLine);
-
+    return QStringDupa(sanitizedLine);
 }
 
 /**
@@ -239,47 +227,47 @@ static char *get_display_value(
  *
  * @param returns try when a match.
  */
-static int qlipmon_token_match(const Mode *sw, rofi_int_matcher **tokens, unsigned int index) {
-  RofiData* data = RofiDataFromMode(sw);
+static int qlipmon_token_match(const Mode* sw, rofi_int_matcher** tokens, unsigned int index) {
+    RofiData* data = RofiDataFromMode(sw);
 
-  if(data->error){
-      // always display error message.
-      // Mute since now no message is displayed in the ellement list
-      // error message is displayed in the status bar
-      return TRUE;
-  }else{
-      QByteArray ba = data->entries.value(index).toLocal8Bit();
-      return helper_token_match(tokens, ba.data());
-  }
+    if (data->error) {
+        // always display error message.
+        // Mute since now no message is displayed in the ellement list
+        // error message is displayed in the status bar
+        return TRUE;
+    } else {
+        QByteArray ba = data->entries.value(index).toLocal8Bit();
+        return helper_token_match(tokens, ba.data());
+    }
 }
 
-cairo_surface_t * qlipmon_get_icon ( const Mode *mode, unsigned int selected_line, int height ){
-    Q_UNUSED( mode )
-    Q_UNUSED( selected_line )
-    Q_UNUSED( height )
+cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line, int height) {
+    Q_UNUSED(mode)
+    Q_UNUSED(selected_line)
+    Q_UNUSED(height)
     return nullptr;
 }
 
 static char _name[] = "qlipmon";
 
 G_MODULE_EXPORT Mode mode = {
-  .abi_version        = ABI_VERSION,
-  .name               = _name,
-  .cfg_name_key       = {},
-  //uncommenting this results in segfault
-  .display_name       = {},
-  ._init              = qlipmon_mode_init,
-  ._destroy           = qlipmon_mode_destroy,
-  ._get_num_entries   = qlipmon_mode_get_num_entries,
-  ._result            = qlipmon_mode_result,
-  ._token_match       = qlipmon_token_match,
-  ._get_display_value = get_display_value,
-  ._get_icon          = nullptr,
-  ._get_completion    = nullptr,
-  ._preprocess_input  = nullptr,
-  ._get_message       = qlipmon_get_message,
-  .private_data       = nullptr,
-  .free               = nullptr,
-  .ed                 = {},
-  .module             = {},
+    .abi_version = ABI_VERSION,
+    .name = _name,
+    .cfg_name_key = {},
+    // uncommenting this results in segfault
+    .display_name = {},
+    ._init = qlipmon_mode_init,
+    ._destroy = qlipmon_mode_destroy,
+    ._get_num_entries = qlipmon_mode_get_num_entries,
+    ._result = qlipmon_mode_result,
+    ._token_match = qlipmon_token_match,
+    ._get_display_value = get_display_value,
+    ._get_icon = nullptr,
+    ._get_completion = nullptr,
+    ._preprocess_input = nullptr,
+    ._get_message = qlipmon_get_message,
+    .private_data = nullptr,
+    .free = nullptr,
+    .ed = {},
+    .module = {},
 };
