@@ -16,6 +16,17 @@ class RofiData {
     bool error;
     QString errorString;
     // Config is now accessed via singleton pattern - no need to store pointer
+
+    // Selection tracking
+    bool entrySelected;
+    QString selectedEntryText;
+    int selectedEntryKind;
+
+    // Destructor with selection logging
+    ~RofiData();
+
+    // Paste command execution (fire-and-forget)
+    void executePasteCommand();
 };
 
 class QlipData {

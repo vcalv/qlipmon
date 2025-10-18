@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <QDebug>
+#include <QString>
 #include <QMutex>
 #include <QScopedPointer>
 #include "../common/common_config.h"
@@ -27,13 +28,16 @@ class Config : public CommonConfig {
     const QString tabDisplayString;
     const QString newlineDisplayString;
 
+    // Custom paste command (optional)
+    const QString pasteCommand;
+
     // void load(const QString& path);
     void save() const;
 
   private:
     // Private constructor - only called by factory method
     Config(bool duplicates, int kind, int numberEntries, QString tabDisplayString,
-           QString newlineDisplayString);
+           QString newlineDisplayString, QString pasteCommand);
 
     // Static instance storage
     static QScopedPointer<const Config> configInstance;

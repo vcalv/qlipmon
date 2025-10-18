@@ -2,7 +2,7 @@ include(../common_include.pri)
 
 TARGET = qlipmon
 
-QT = dbus
+QT = core dbus
 
 TEMPLATE = lib
 DEFINES += ROFIQLIPMON_LIBRARY
@@ -10,17 +10,16 @@ DEFINES += ROFIQLIPMON_LIBRARY
 CONFIG += plugin
 CONFIG += no_plugin_name_prefix
 CONFIG += skip_target_version_ext
-
-#CONFIG += c++17 link_pkgconfig
-#PKGCONFIG += rofi
-
 CONFIG += c++17
 
 #ugly hack because qmake replaces -I/usb/include by -isystem /usr/include and breaks g++
 QMAKE_CXXFLAGS += $$system("pkgconf --cflags-only-I rofi")
 
-#I just need the headers, no need to link agains QtGUI
+#I just need the headers, no need to link against Qt modules
+QMAKE_CXXFLAGS += $$system("pkgconf --cflags-only-I Qt6Core")
 QMAKE_CXXFLAGS += $$system("pkgconf --cflags-only-I Qt6Gui")
+QMAKE_CXXFLAGS += $$system("pkgconf --cflags-only-I rofi")
+QMAKE_CXXFLAGS += $$system("pkgconf --cflags-only-I glib-2.0")
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings

@@ -130,6 +130,12 @@ static ModeMode qlipmon_mode_result(Mode* sw, int mretv, char** input, unsigned 
         if (!data->error) {
             const QString selected = data->entries.value(selected_line);
             qDebug() << "Selected = " << selected;
+
+            // Track selection information
+            data->entrySelected = true;
+            data->selectedEntryText = selected;
+            data->selectedEntryKind = Config::instance().kind;
+
             QlipData::setText(selected);
         }
         retv = MODE_EXIT;
@@ -147,6 +153,9 @@ static ModeMode qlipmon_mode_result(Mode* sw, int mretv, char** input, unsigned 
 static void qlipmon_mode_destroy(Mode* sw) {
     RofiData* data = RofiDataFromMode(sw);
     if (data != nullptr) {
+        // Execute paste command if entry was selected (fire-and-forget)
+        data->executePasteCommand();
+
         delete data; // Delete the RofiData container (Config is now singleton)
     }
 }
@@ -268,6 +277,11 @@ G_MODULE_EXPORT Mode mode = {
     ._get_message = qlipmon_get_message,
     .private_data = nullptr,
     .free = nullptr,
+	._create = nullptr,
+	._completer_result = nullptr,
     .ed = {},
     .module = {},
+	.fallback_icon_fetch_uid = 0,
+	.fallback_icon_not_found = 0,
+	.type = MODE_TYPE_SWITCHER,
 };
