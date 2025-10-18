@@ -79,7 +79,7 @@ rofi -modi qlipmon -show qlipmon -qlipmon-paste-command 'echo "$QLIPMON_TEXT"'
 **Configuration File (`$HOME/.config/qlipmon/rofi.ini`):**
 
 ```ini
-paste_command = echo "$QLIPMON_TEXT"
+paste_command = notify-send -a QlipMon -u low -t 5000  "Selected" "$QLIPMON_TEXT"
 ```
 
 **Automatic Pasting:**
