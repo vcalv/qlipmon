@@ -3,7 +3,6 @@
 #include "database.h"
 #include "qlipmon_adaptor.h"
 
-#include <QObject>
 #include <QtDebug>
 
 #include <QGuiApplication>

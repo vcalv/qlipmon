@@ -4,7 +4,6 @@
 #include <QDebug>
 #include <QMutex>
 #include <QScopedPointer>
-#include <QStandardPaths>
 #include "../common/common_config.h"
 
 class Config : public CommonConfig {

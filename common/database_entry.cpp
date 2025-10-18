@@ -1,6 +1,5 @@
 #include "database_entry.h"
 #include <QtDBus>
-#include <QDebug>
 
 /// Initializer
 class Init {
