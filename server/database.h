@@ -5,7 +5,7 @@
 #include <QClipboard>
 #include <QList>
 #include <QObject>
-#include <memory>
+#include <QScopedPointer>
 
 #include "../common/database_entry.h"
 
@@ -36,7 +36,7 @@ class database {
     database(int numberEntries, bool useDiskDatabase, const QString& databasePath);
 
     // Static instance storage
-    static std::unique_ptr<database> databaseInstance;
+    static QScopedPointer<database> databaseInstance;
 
     int numberEntries;
     void __cleanup();

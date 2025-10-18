@@ -13,7 +13,7 @@
 #include <QDebug>
 
 // Static instance storage
-std::unique_ptr<database> database::databaseInstance;
+QScopedPointer<database> database::databaseInstance;
 
 // Static database connection storage to ensure proper cleanup order
 static QString staticConnectionName;
@@ -211,7 +211,7 @@ database& database::createFromConfig() {
     const Config& config = Config::instance();
 
     // Create and store the database instance
-    databaseInstance = std::unique_ptr<database>(
+    databaseInstance.reset(
         new database(config.numberEntries, config.useDiskDatabase, config.databasePath));
 
     qDebug() << "Database created from Config";
