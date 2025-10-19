@@ -90,15 +90,21 @@ database::~database() {
 
 // Private constructor - only called by factory method
 database::database(int numberEntries, bool useDiskDatabase, const QString& databasePath)
-    : numberEntries(numberEntries) {
+    : numberEntries(numberEntries), useDiskDatabase(useDiskDatabase), databasePath(databasePath) {
 
+    // Log Qt/SQLite version information
     QStringList drivers = QSqlDatabase::drivers();
-    qDebug() << "Available QtSQL drivers:" << drivers.join(", ");
+    qDebug() << "QtSQL drivers:" << drivers.join(", ");
     const QString DRIVER("QSQLITE");
     QSqlDatabase db = QSqlDatabase::addDatabase(DRIVER);
 
+    QString dbType = useDiskDatabase ? "disk" : "memory";
+    QString actualPath = useDiskDatabase ? databasePath : ":memory:";
+
+    qDebug() << "Initializing" << dbType << "database...";
+
     if (useDiskDatabase) {
-        qDebug() << "Using disk database at path:" << databasePath;
+        qDebug() << "Database path:" << databasePath;
 
         // Always ensure default data directory exists
         QString defaultDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -124,16 +130,19 @@ database::database(int numberEntries, bool useDiskDatabase, const QString& datab
 
         db.setDatabaseName(databasePath);
     } else {
-        qDebug() << "Using in-memory database";
+        qDebug() << "Using in-memory database (temporary, data lost on exit)";
         db.setDatabaseName(":memory:");
     }
 
     if (!db.open()) {
         qCritical() << "Failed to open database: " << db.lastError().text();
-        qCritical() << "Database name: " << databasePath;
+        qCritical() << "Database name: " << actualPath;
         qCritical() << "Driver: " << DRIVER;
         return;
     }
+
+    qDebug() << "Database opened successfully";
+    qDebug() << "Connection name:" << db.connectionName();
 
     // Ensure foreign key constraints are enabled
     QSqlQuery enableFK;
@@ -201,9 +210,9 @@ database::database(int numberEntries, bool useDiskDatabase, const QString& datab
         qWarning() << "Startup cleanup failed:" << cleanupQuery.lastError().text();
     }
 
-    qDebug() << "Database constructed with:"
-             << "entries=" << numberEntries << "disk_db=" << useDiskDatabase
-             << "db_path=" << databasePath;
+    // Improved final logging
+    qDebug() << "Database constructed: Database{ entries:" << numberEntries << ", type:" << dbType
+             << ", path:" << actualPath << ", driver:" << DRIVER << " }";
 }
 
 // Factory method for database initialization using Config

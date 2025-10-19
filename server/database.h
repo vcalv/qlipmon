@@ -39,6 +39,8 @@ class database {
     static QScopedPointer<database> databaseInstance;
 
     int numberEntries;
+    bool useDiskDatabase;
+    QString databasePath;
     void __cleanup();
 };
 
