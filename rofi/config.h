@@ -31,13 +31,16 @@ class Config : public CommonConfig {
     // Custom paste command (optional)
     const QString pasteCommand;
 
+    // Custom icon
+    const QString icon;
+
     // void load(const QString& path);
     void save() const;
 
   private:
     // Private constructor - only called by factory method
     Config(bool duplicates, int kind, int numberEntries, QString tabDisplayString,
-           QString newlineDisplayString, QString pasteCommand);
+           QString newlineDisplayString, QString pasteCommand, QString icon);
 
     // Static instance storage
     static QScopedPointer<const Config> configInstance;

@@ -12,12 +12,12 @@ QScopedPointer<const Config> Config::configInstance;
 
 // Private constructor
 Config::Config(bool duplicates, int kind, int numberEntries, QString tabDisplayString,
-               QString newlineDisplayString, QString pasteCommand)
+               QString newlineDisplayString, QString pasteCommand, QString icon)
     : duplicates(duplicates), kind(kind), numberEntries(numberEntries),
       tabDisplayString(std::move(tabDisplayString)),
-      newlineDisplayString(std::move(newlineDisplayString)), pasteCommand(std::move(pasteCommand)) {
-    qDebug() << "Rofi Config constructed with:"
-             << "entries=" << numberEntries << "duplicates=" << duplicates << "kind=" << kind;
+      newlineDisplayString(std::move(newlineDisplayString)), pasteCommand(std::move(pasteCommand)),
+      icon(std::move(icon)) {
+    qDebug() << "Rofi Config constructed:" << *this;
 }
 
 // Factory method for CLI construction
@@ -29,6 +29,7 @@ const Config& Config::createFromCLI() {
     QString tabDisplayString = QStringLiteral("⭾");
     QString newlineDisplayString = QStringLiteral("⏎");
     QString pasteCommand = QString();
+    QString icon = QString("edit-paste");
 
     // Load from settings file
     QSettings* settings = CommonConfig::getSettings("qlipmon", "rofi");
@@ -41,6 +42,7 @@ const Config& Config::createFromCLI() {
     tabDisplayString = loadValue(settings, "tab_string", tabDisplayString);
     newlineDisplayString = loadValue(settings, "newline_string", newlineDisplayString);
     pasteCommand = loadValue(settings, "paste_command", pasteCommand);
+    icon = loadValue(settings, "icon", icon);
 
     // Apply CLI overrides
     int originalNumberEntries = numberEntries;
@@ -49,6 +51,7 @@ const Config& Config::createFromCLI() {
     QString originalTabString = tabDisplayString;
     QString originalNewlineString = newlineDisplayString;
     QString originalPasteCommand = pasteCommand;
+    QString originalIcon = icon;
 
     // Helper function to apply integer argument override with logging
     auto applyIntOverride = [&](const char* argName, int& target, int original) {
@@ -90,11 +93,12 @@ const Config& Config::createFromCLI() {
     applyStringOverride("-qlipmon-tab-string", tabDisplayString, originalTabString);
     applyStringOverride("-qlipmon-newline-string", newlineDisplayString, originalNewlineString);
     applyStringOverride("-qlipmon-paste-command", pasteCommand, originalPasteCommand);
+    applyStringOverride("-qlipmon-icon", icon, originalIcon);
 
     // Create and store the immutable config instance using reset
     if (!configInstance) {
         configInstance.reset(new Config(duplicates, kind, numberEntries, tabDisplayString,
-                                        newlineDisplayString, pasteCommand));
+                                        newlineDisplayString, pasteCommand, icon));
     }
 
     qDebug() << "Rofi Config created from CLI arguments:" << *configInstance;
@@ -105,7 +109,7 @@ QDebug& operator<<(QDebug& out, const Config& c) {
     out << "Config{ number:" << c.numberEntries << ", duplicates: " << c.duplicates << ", "
         << " kind: " << c.kind << ", tab_string: " << c.tabDisplayString
         << ", newline_string: " << c.newlineDisplayString << ", paste_command: " << c.pasteCommand
-        << "}";
+        << ", icon: " << c.icon << "}";
     return out;
 }
 
@@ -128,6 +132,7 @@ void Config::save() const {
     saveValue(settings, "tab_string", tabDisplayString);
     saveValue(settings, "newline_string", newlineDisplayString);
     saveValue(settings, "paste_command", pasteCommand);
+    saveValue(settings, "icon", icon);
 
     settings->sync();
     qDebug() << "Rofi config saved";

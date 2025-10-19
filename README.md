@@ -60,6 +60,7 @@ The rofi plugin supports these command line options to override configuration:
 * `-qlipmon-tab-string <string>` - Display string for tab characters (default: ⭾)
 * `-qlipmon-newline-string <string>` - Display string for newline characters (default: ⏎)
 * `-qlipmon-paste-command <command>` - Command to execute when entry is selected
+* `-qlipmon-icon <string>` - Icon name for rofi interface (default: edit-paste)
 
 ## Paste Command
 
@@ -80,6 +81,7 @@ rofi -modi qlipmon -show qlipmon -qlipmon-paste-command 'echo "$QLIPMON_TEXT"'
 
 ```ini
 paste_command = notify-send -a QlipMon -u low -t 5000  "Selected" "$QLIPMON_TEXT"
+icon = edit-paste
 ```
 
 **Automatic Pasting:**

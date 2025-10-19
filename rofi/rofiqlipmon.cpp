@@ -3,6 +3,7 @@
 extern "C" {
 #include <rofi/mode.h>
 #include <rofi/helper.h>
+#include <rofi/rofi-icon-fetcher.h>
 #include <rofi/mode-private.h>
 }
 
@@ -254,8 +255,14 @@ cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line,
                                   unsigned int height) {
     Q_UNUSED(mode)
     Q_UNUSED(selected_line)
-    Q_UNUSED(height)
-    return nullptr;
+
+    auto icon = Config::instance().icon;
+
+    if (icon.size() > 0) {
+        return rofi_icon_fetcher_get(rofi_icon_fetcher_query(icon.toUtf8().constData(), height));
+    } else {
+        return nullptr;
+    }
 }
 
 static char _name[] = "qlipmon";

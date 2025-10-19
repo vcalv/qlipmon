@@ -13,9 +13,7 @@ Config::Config(int numberEntries, bool broadcast, bool dbus, bool useDiskDatabas
                QString databasePath)
     : numberEntries(numberEntries), broadcast(broadcast), dbus(dbus),
       useDiskDatabase(useDiskDatabase), databasePath(std::move(databasePath)) {
-    qDebug() << "Server Config constructed with:"
-             << "entries=" << numberEntries << "broadcast=" << broadcast << "dbus=" << dbus
-             << "disk_db=" << useDiskDatabase << "db_path=" << databasePath;
+    qDebug() << "Server Config constructed:" << *this;
 }
 
 // Factory method for CLI construction
