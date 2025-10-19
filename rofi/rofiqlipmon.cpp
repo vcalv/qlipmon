@@ -258,11 +258,12 @@ cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line, 
 }
 
 static char _name[] = "qlipmon";
+static char _name_key[] = "display-qlipmon";
 
 G_MODULE_EXPORT Mode mode = {
     .abi_version = ABI_VERSION,
     .name = _name,
-    .cfg_name_key = {},
+    .cfg_name_key = _name_key,
     // uncommenting this results in segfault
     .display_name = {},
     ._init = qlipmon_mode_init,
