@@ -250,7 +250,8 @@ static int qlipmon_token_match(const Mode* sw, rofi_int_matcher** tokens, unsign
     }
 }
 
-cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line, int height) {
+cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line,
+                                  unsigned int height) {
     Q_UNUSED(mode)
     Q_UNUSED(selected_line)
     Q_UNUSED(height)
@@ -260,29 +261,32 @@ cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line, 
 static char _name[] = "qlipmon";
 static char _name_key[] = "display-qlipmon";
 
-G_MODULE_EXPORT Mode mode = {
-    .abi_version = ABI_VERSION,
-    .name = _name,
-    .cfg_name_key = _name_key,
-    // uncommenting this results in segfault
-    .display_name = {},
-    ._init = qlipmon_mode_init,
-    ._destroy = qlipmon_mode_destroy,
-    ._get_num_entries = qlipmon_mode_get_num_entries,
-    ._result = qlipmon_mode_result,
-    ._token_match = qlipmon_token_match,
-    ._get_display_value = get_display_value,
-    ._get_icon = nullptr,
-    ._get_completion = nullptr,
-    ._preprocess_input = nullptr,
-    ._get_message = qlipmon_get_message,
-    .private_data = nullptr,
-    .free = nullptr,
-	._create = nullptr,
-	._completer_result = nullptr,
-    .ed = {},
-    .module = {},
-	.fallback_icon_fetch_uid = 0,
-	.fallback_icon_not_found = 0,
-	.type = MODE_TYPE_SWITCHER,
-};
+G_MODULE_EXPORT Mode mode = []() {
+    Mode m = {
+        .abi_version = ABI_VERSION,
+        .name = _name,
+        .cfg_name_key = {},
+        .display_name = {},
+        ._init = qlipmon_mode_init,
+        ._destroy = qlipmon_mode_destroy,
+        ._get_num_entries = qlipmon_mode_get_num_entries,
+        ._result = qlipmon_mode_result,
+        ._token_match = qlipmon_token_match,
+        ._get_display_value = get_display_value,
+        ._get_icon = qlipmon_get_icon,
+        ._get_completion = nullptr,
+        ._preprocess_input = nullptr,
+        ._get_message = qlipmon_get_message,
+        .private_data = nullptr,
+        .free = nullptr,
+        ._create = nullptr,
+        ._completer_result = nullptr,
+        .ed = {},
+        .module = {},
+        .fallback_icon_fetch_uid = 0,
+        .fallback_icon_not_found = 0,
+        .type = MODE_TYPE_SWITCHER,
+    };
+    g_strlcpy(m.cfg_name_key, _name_key, sizeof(m.cfg_name_key));
+    return m;
+}();
