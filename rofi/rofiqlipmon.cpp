@@ -78,6 +78,7 @@ static char* QStringDupa(const QString& line) {
  * @returns FALSE if there was a failure, TRUE if successful
  */
 static int qlipmon_mode_init(Mode* sw) {
+    qDebug() << "qlipmon_mode_init" << sw;
     if (mode_get_private_data(sw) == nullptr) {
         // Create config from CLI once during plugin initialization
         Config::createFromCLI();
@@ -128,7 +129,7 @@ static ModeMode qlipmon_mode_result(Mode* sw, int mretv, char** input, unsigned 
     } else if (mretv & MENU_QUICK_SWITCH) {
         retv = (ModeMode)(mretv & MENU_LOWER_MASK);
     } else if ((mretv & MENU_OK)) {
-        if (!data->error) {
+        if (!data->error && selected_line < static_cast<unsigned int>(data->entries.size())) {
             const QString selected = data->entries.value(selected_line);
             qDebug() << "Selected = " << selected;
 
@@ -152,12 +153,14 @@ static ModeMode qlipmon_mode_result(Mode* sw, int mretv, char** input, unsigned 
  * Destroy the mode
  */
 static void qlipmon_mode_destroy(Mode* sw) {
+    qDebug() << "qlipmon_mode_destroy" << sw;
     RofiData* data = RofiDataFromMode(sw);
     if (data != nullptr) {
         // Execute paste command if entry was selected (fire-and-forget)
         data->executePasteCommand();
 
         delete data; // Delete the RofiData container (Config is now singleton)
+        mode_set_private_data(sw, nullptr); // CRITICAL: Set to nullptr after delete!
     }
 }
 
@@ -222,7 +225,6 @@ static char* get_display_value(const Mode* sw, unsigned int selected_line, int* 
     QString line = data->entries.value(selected_line);
 
     // Apply comprehensive character replacements for better display
-    // This replaces the original two replace() calls with a single, more efficient function
     QString sanitizedLine = sanitizeForDisplay(line);
 
     return QStringDupa(sanitizedLine);
@@ -241,14 +243,17 @@ static int qlipmon_token_match(const Mode* sw, rofi_int_matcher** tokens, unsign
     RofiData* data = RofiDataFromMode(sw);
 
     if (data->error) {
-        // always display error message.
-        // Mute since now no message is displayed in the ellement list
-        // error message is displayed in the status bar
-        return TRUE;
-    } else {
-        QByteArray ba = data->entries.value(index).toLocal8Bit();
-        return helper_token_match(tokens, ba.data());
+        // Don't match anything when there's an error
+        return FALSE;
     }
+
+    // Bounds check
+    if (index >= static_cast<unsigned int>(data->entries.size())) {
+        return FALSE;
+    }
+
+    QByteArray ba = data->entries.value(index).toLocal8Bit();
+    return helper_token_match(tokens, ba.data());
 }
 
 cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line,
@@ -258,10 +263,10 @@ cairo_surface_t* qlipmon_get_icon(const Mode* mode, unsigned int selected_line,
 
     auto icon = Config::instance().icon;
 
-    if (icon.size() > 0) {
-        return rofi_icon_fetcher_get(rofi_icon_fetcher_query(icon.toUtf8().constData(), height));
-    } else {
+    if (icon.isEmpty()) {
         return nullptr;
+    } else {
+        return rofi_icon_fetcher_get(rofi_icon_fetcher_query(icon.toUtf8().constData(), height));
     }
 }
 
